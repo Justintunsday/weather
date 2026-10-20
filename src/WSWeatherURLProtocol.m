@@ -228,6 +228,30 @@ static NSDictionary *WSParseWeatherURL(NSURL *url) {
         }
 
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        if ([[WSSettings shared] logLevel] >= 3 && data.length) {
+            static NSInteger dumpCount = 0;
+            NSInteger dumpIndex = -1;
+            @synchronized ([WSWeatherURLProtocol class]) {
+                if (dumpCount < 3) {
+                    dumpIndex = dumpCount;
+                    dumpCount++;
+                }
+            }
+            if (dumpIndex >= 0) {
+                NSString *base = [NSString stringWithFormat:@"/tmp/WeatherSource-response-%ld", (long)dumpIndex];
+                [data writeToFile:[base stringByAppendingString:@".bin"] atomically:YES];
+                [httpResponse.MIMEType writeToFile:[base stringByAppendingString:@".type.txt"]
+                                        atomically:YES
+                                          encoding:NSUTF8StringEncoding
+                                             error:nil];
+                [httpResponse.URL.absoluteString writeToFile:[base stringByAppendingString:@".url.txt"]
+                                                 atomically:YES
+                                                   encoding:NSUTF8StringEncoding
+                                                      error:nil];
+                [WSLogger info:@"Dumped response %ld (%lu bytes, type=%@) to %@.bin",
+                              (long)dumpIndex, (unsigned long)data.length, httpResponse.MIMEType, base];
+            }
+        }
         dispatch_async(strongSelf.deliveryQueue, ^{
             if (strongSelf.stopped) return;
             WSWeatherSnapshot *snapshot = nil;

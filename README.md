@@ -83,6 +83,19 @@ make package FINALPACKAGE=1
 
 更完整的分析、已验证事实和未验证项见 [docs/TECHNICAL_FEASIBILITY.md](docs/TECHNICAL_FEASIBILITY.md)；限制见 [docs/LIMITATIONS.md](docs/LIMITATIONS.md)。
 
+
+### 调试响应转储
+
+把日志级别设为 Debug（设置页日志级别 3）后，插件会把前 3 个 Apple 原始响应保存到：
+
+```text
+/tmp/WeatherSource-response-0.bin
+/tmp/WeatherSource-response-0.type.txt
+/tmp/WeatherSource-response-0.url.txt
+```
+
+用于确认 iOS 16 的实际 JSON/FlatBuffer 结构和 Content-Type。文件包含查询坐标，请勿公开分享；确认后可在设置页清空日志或手动删除。
+
 ## 当前限制
 
 - 未完成 iPhone12,8 / iOS 16.1.1 真机运行验证；无法保证该固件的 WeatherKit 响应格式与字段索引完全一致。

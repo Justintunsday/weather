@@ -282,3 +282,7 @@ Open-Meteo 的 WMO `weather_code` 和 QWeather 的 `icon` 均映射到上述值�
 4. `weatherd` 是否在响应到达后立即写入 `weather-data.db`，以及 App 是否会从该缓存读取到补丁后的数据。
 
 这些事项不影响“失败时保留 Apple 原生数据”的安全回退，但在真机验证前不能声称完整成功。
+
+### 9.1 调试转储
+
+v0.1.2 在 Debug 日志级别（设置页日志级别 3）下会把前 3 个 Apple 原始响应写到 `/tmp/WeatherSource-response-{0,1,2}.bin`，同时写 `.type.txt` 和 `.url.txt`。这用于在无法连接 Xcode/代理时确认 iOS 16.1.1 的实际 JSON 字段、Content-Type 和 URL 形态。转储包含查询坐标，属于本地调试数据，不应公开上传。确认后可用设置页“清空日志”或直接删除文件。

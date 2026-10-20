@@ -2,5 +2,7 @@
 
 killall -9 Weather 2>/dev/null || true
 killall -9 WeatherWidget 2>/dev/null || true
+killall -9 weatherd 2>/dev/null || true
+killall -9 WeatherPoster 2>/dev/null || true
 
 exit 0
