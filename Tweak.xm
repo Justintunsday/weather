@@ -39,8 +39,10 @@ static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuratio
     Class protocolClass = [WSWeatherURLProtocol class];
     if (![classes containsObject:protocolClass]) {
         [classes addObject:protocolClass];
-        configuration.protocolClasses = classes;
     }
+    // The getter hook can synthesize the class without updating the backing config.
+    // Always persist the returned list before NSURLSession copies its internals.
+    configuration.protocolClasses = classes;
     [WSLogger info:@"Prepared URLSession config in %@ classes=%lu",
                   [[NSProcessInfo processInfo] processName], (unsigned long)configuration.protocolClasses.count];
 }
@@ -124,8 +126,8 @@ static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuratio
 %ctor {
     @autoreleasepool {
         NSString *processName = [[NSProcessInfo processInfo] processName] ?: @"?";
-        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.5", getpid(), processName);
-        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.5 date=%@\n",
+        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.6", getpid(), processName);
+        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.6 date=%@\n",
                             getpid(), processName, [NSDate date]];
         NSArray<NSString *> *markerPaths = @[
             @"/var/mobile/Library/Weather/WeatherSource-ctor.txt",

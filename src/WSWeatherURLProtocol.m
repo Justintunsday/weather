@@ -116,7 +116,12 @@ static NSDictionary *WSParseWeatherURL(NSURL *url) {
     if (!request || !request.URL) return NO;
     if ([NSURLProtocol propertyForKey:WSForwardedPropertyKey inRequest:request]) return NO;
     if ([[request valueForHTTPHeaderField:WSForwardedHeader] length]) return NO;
-    return WSParseWeatherURL(request.URL) != nil;
+    BOOL result = WSParseWeatherURL(request.URL) != nil;
+    NSString *host = request.URL.host.lowercaseString;
+    if ([host isEqualToString:@"weather-data.apple.com"] || [host isEqualToString:@"weatherkit.apple.com"]) {
+        [WSLogger info:@"canInit host=%@ path=%@ result=%d", host, request.URL.path, result];
+    }
+    return result;
 }
 
 + (NSURLRequest *)canonicalRequestForRequest:(NSURLRequest *)request {
