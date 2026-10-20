@@ -32,6 +32,19 @@ static BOOL WSIsForwardedRequest(NSURLRequest *request) {
     return [[request valueForHTTPHeaderField:@"X-WeatherSource-Forwarded"] length] > 0;
 }
 
+static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuration) {
+    if (!configuration) return;
+    NSMutableArray *classes = [[configuration protocolClasses] mutableCopy];
+    if (!classes) classes = [NSMutableArray array];
+    Class protocolClass = [WSWeatherURLProtocol class];
+    if (![classes containsObject:protocolClass]) {
+        [classes addObject:protocolClass];
+        configuration.protocolClasses = classes;
+    }
+    [WSLogger info:@"Prepared URLSession config in %@ classes=%lu",
+                  [[NSProcessInfo processInfo] processName], (unsigned long)configuration.protocolClasses.count];
+}
+
 %hook NSURLSessionConfiguration
 
 + (NSURLSessionConfiguration *)defaultSessionConfiguration {
@@ -70,19 +83,38 @@ static BOOL WSIsForwardedRequest(NSURLRequest *request) {
 
 %hook NSURLSession
 
++ (NSURLSession *)sessionWithConfiguration:(NSURLSessionConfiguration *)configuration {
+    WSAddProtocolToConfiguration(configuration);
+    return %orig;
+}
+
++ (NSURLSession *)sessionWithConfiguration:(NSURLSessionConfiguration *)configuration
+                                  delegate:(id)delegate
+                             delegateQueue:(NSOperationQueue *)queue {
+    WSAddProtocolToConfiguration(configuration);
+    return %orig;
+}
+
+- (instancetype)initWithConfiguration:(NSURLSessionConfiguration *)configuration
+                             delegate:(id)delegate
+                        delegateQueue:(NSOperationQueue *)queue {
+    WSAddProtocolToConfiguration(configuration);
+    return %orig;
+}
+
 - (NSURLSessionDataTask *)dataTaskWithRequest:(NSURLRequest *)request
                             completionHandler:(void (^)(NSData *, NSURLResponse *, NSError *))completionHandler {
     if (WSIsWeatherRequest(request) && !WSIsForwardedRequest(request)) {
-        [WSLogger info:@"NSURLSession completion task in %@: %@ %@",
-                      [[NSProcessInfo processInfo] processName], request.HTTPMethod, request.URL.path];
+        [WSLogger info:@"NSURLSession completion task in %@: %@ host=%@ path=%@",
+                      [[NSProcessInfo processInfo] processName], request.HTTPMethod, request.URL.host, request.URL.path];
     }
     return %orig;
 }
 
 - (NSURLSessionDataTask *)dataTaskWithRequest:(NSURLRequest *)request {
     if (WSIsWeatherRequest(request) && !WSIsForwardedRequest(request)) {
-        [WSLogger info:@"NSURLSession delegate task in %@: %@ %@",
-                      [[NSProcessInfo processInfo] processName], request.HTTPMethod, request.URL.path];
+        [WSLogger info:@"NSURLSession delegate task in %@: %@ host=%@ path=%@",
+                      [[NSProcessInfo processInfo] processName], request.HTTPMethod, request.URL.host, request.URL.path];
     }
     return %orig;
 }
@@ -92,8 +124,8 @@ static BOOL WSIsForwardedRequest(NSURLRequest *request) {
 %ctor {
     @autoreleasepool {
         NSString *processName = [[NSProcessInfo processInfo] processName] ?: @"?";
-        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.4", getpid(), processName);
-        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.4 date=%@\n",
+        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.5", getpid(), processName);
+        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.5 date=%@\n",
                             getpid(), processName, [NSDate date]];
         NSArray<NSString *> *markerPaths = @[
             @"/var/mobile/Library/Weather/WeatherSource-ctor.txt",
