@@ -177,12 +177,18 @@ static NSNumber *WSSnowfallMillimeters(NSNumber *centimeters) {
         day.temperatureMin = WSArrayNumber(daily[@"temperature_2m_min"], i);
         day.humidityMax = WSClampedInteger(WSArrayNumber(daily[@"relative_humidity_2m_max"], i), 0, 100);
         day.humidityMin = WSClampedInteger(WSArrayNumber(daily[@"relative_humidity_2m_min"], i), 0, 100);
+        day.apparentTemperatureMax = WSArrayNumber(daily[@"apparent_temperature_max"], i);
+        day.apparentTemperatureMin = WSArrayNumber(daily[@"apparent_temperature_min"], i);
         day.maxUvIndex = WSClampedInteger(WSArrayNumber(daily[@"uv_index_max"], i), 0, 20);
+        day.uvIndex = day.maxUvIndex;
         day.precipitationChance = WSClampedInteger(WSArrayNumber(daily[@"precipitation_probability_max"], i), 0, 100);
         day.precipitationAmount = WSArrayNumber(daily[@"precipitation_sum"], i);
         day.snowfallAmount = WSSnowfallMillimeters(WSArrayNumber(daily[@"snowfall_sum"], i));
         day.windSpeedMax = WSArrayNumber(daily[@"wind_speed_10m_max"], i);
+        day.windSpeed = day.windSpeedMax;
         day.windGustSpeedMax = WSArrayNumber(daily[@"wind_gusts_10m_max"], i);
+        day.windGust = day.windGustSpeedMax;
+        day.windDirection = WSNormalizedWindDirection(WSArrayNumber(daily[@"wind_direction_10m_dominant"], i));
         NSNumber *weatherCode = WSArrayNumber(daily[@"weather_code"], i);
         if (weatherCode) {
             int condition = [WSCondition conditionForWMOWeatherCode:weatherCode.intValue];

@@ -5,5 +5,8 @@
             "com.apple.weather.widget",
             "com.apple.weather.poster"
         );
+        Executables = (
+            "weatherd"
+        );
     };
 }

@@ -185,7 +185,7 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
     [specifiers addObject:clearLogs];
 
     PSSpecifier *about = [PSSpecifier groupSpecifierWithName:@"关于与限制"];
-    [about setProperty:@"v0.1.0 MVP：已接入 Open-Meteo 与可选 QWeather；HKO/SMG/CWA/NWS/JMA/KMA 尚未验证接入，选择后会回退。天气预警、空气质量、分钟级降水与 Apple 原生归属信息默认保留。"
+    [about setProperty:@"v0.1.1 MVP：已接入 Open-Meteo 与可选 QWeather；HKO/SMG/CWA/NWS/JMA/KMA 尚未验证接入，选择后会回退。天气预警、空气质量、分钟级降水与 Apple 原生归属信息默认保留。"
              forKey:@"footerText"];
     [specifiers addObject:about];
 

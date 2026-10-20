@@ -250,3 +250,35 @@ Open-Meteo 的 WMO `weather_code` 和 QWeather 的 `icon` 均映射到上述值�
    - 出现 `Patched ... fields via openmeteo`：补丁成功，对比 UI 温度与 Open-Meteo 网页。
 4. 切换不同城市，确认日志中的 provider 随 URL 经纬度变化；在设置页为某个位置选择 QWeather/Apple 后确认覆盖生效。
 5. 断网/填错 Key，确认 UI 继续显示 Apple 原生数据而不是崩溃或空白。
+
+## 9. iOS 16.1.1 静态分析补充（2026-10-20）
+
+从 iPhone12,8 iOS 16.1.1 (20B101) IPSW 的 dyld shared cache 提取 `WeatherCore`、`WeatherDaemon`、`WeatherKit` 后，确认了以下事实：
+
+- `WeatherCore` 的配置字符串包含：
+  - `"weatherDataEndpointUrl": "https://weather-data.apple.com"`
+  - `configurationEndpointUrl = https://weather-edge.apple.com/v1/configs`
+  - 请求路径模板：`/v3/weather/{lang}/{latitude}/{longitude}`
+  - 查询串模板：`?dataSets=currentWeather,forecastDaily,forecastHourly,severeWeather,weatherChange,airQuality,forecastNextHour,appLocationConfig`
+- `WeatherDaemon` 的字符串包含：
+  - `application/json`
+  - `demoWeatherData.json`
+  - `weather-data.db` 与 `Cache miss for forecastHourly/forecastDaily/currentWeather`
+  - `forecastDaily`、`forecastHourly`、`currentWeather`、`days`、`hours`
+- 因此 iOS 16.1.1 的天气数据端点实际是 **`weather-data.apple.com` + `/v3/weather/...` + JSON**，不是 `weatherkit.apple.com`，也不是 v2 FlatBuffer。`weatherd` 是获取与缓存天气数据的关键进程；v0.1.1 已通过 `Executables = ("weatherd")` 注入 daemon，并把 tweak 的链接框架缩减为 Foundation，避免向 daemon 加载 UIKit。
+- iOS 16 的日预报 JSON 字段与公开 WeatherKit REST/FlatBuffer 命名不同，已适配：
+  - `date`、`temperatureHigh`、`temperatureLow`
+  - `temperatureApparentHigh`、`temperatureApparentLow`
+  - `humidity`、`uvIndex`、`windSpeed`、`windGust`、`windDirection`
+  - `pressure`、`visibility`、`conditionCode`
+  - 同时保留对 `forecastStart`、`temperatureMax/Min`、`humidityMax/Min`、`maxUvIndex` 等旧/公开命名的兼容写入。
+- 预报 JSON 仍以 `currentWeather` / `forecastDaily.days` / `forecastHourly.hours` 组织；`severeWeather` 是 iOS 16 的预警数据集，插件不修改它。
+
+仍待真机确认：
+
+1. `NSURLProtocol` 是否能在 `weatherd` 和 Widget 扩展的实际 URLSession 配置中生效。
+2. `weatherd` 的沙箱是否允许读取 `com.weathersource.tweak` 偏好设置；若不允许，daemon 侧可能只能使用默认 provider（Open-Meteo）。
+3. 实际 JSON 中哪些字段是必填、哪些是可选的；插件只写已存在字段，失败时透传。
+4. `weatherd` 是否在响应到达后立即写入 `weather-data.db`，以及 App 是否会从该缓存读取到补丁后的数据。
+
+这些事项不影响“失败时保留 Apple 原生数据”的安全回退，但在真机验证前不能声称完整成功。

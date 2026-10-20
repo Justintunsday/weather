@@ -1,4 +1,4 @@
-﻿# WeatherSource
+# WeatherSource
 
 按天气 App 当前查询地点，自动选择天气数据源的 iOS 16 Rootless 越狱插件。
 
@@ -9,9 +9,9 @@
 
 ## 下载
 
-- [GitHub Release v0.1.0（rootless .deb）](https://github.com/Justintunsday/weather/releases/tag/v0.1.0)
+- [GitHub Release v0.1.1（rootless .deb）](https://github.com/Justintunsday/weather/releases/tag/v0.1.1)
 - GitHub Actions 制品：`WeatherSource-rootless-deb`
-- 最近一次成功构建：run `39429547604`
+- 最近一次成功构建：见 GitHub Actions（v0.1.1）
 
 ## 它做什么
 
@@ -68,16 +68,18 @@ export THEOS=$HOME/theos
 make package FINALPACKAGE=1
 ```
 
-产物：`packages/com.weathersource.tweak_0.1.0_iphoneos-arm64.deb`。
+产物：`packages/com.weathersource.tweak_0.1.1_iphoneos-arm64.deb`。
 
 ## 技术路线（简述）
 
-- **注入进程**：`com.apple.weather`（Weather App）、`com.apple.weather.widget`（天气小组件，含锁屏小组件）、`com.apple.weather.poster`（预留）。
-- **Hook 点**：`+[NSURLProtocol registerClass:]` + `NSURLSessionConfiguration.protocolClasses`。不直接 Hook Swift async `WeatherKit.WeatherService`，避免 Swift async ABI 和私有模型构造带来的脆弱性。
-- **响应格式**：同时支持 JSON 和 `application/vnd.apple.flatbuffer`。iOS 16.1.1 实际使用哪一种尚未在真机确认；两种路径都已实现。
+- **注入进程**：`com.apple.weather`（Weather App）、`com.apple.weather.widget`（小组件/锁屏小组件）、`com.apple.weather.poster`，以及 `weatherd`（`Executables`，iOS 16.1.1 的获取/缓存进程）。核心 tweak 只链 Foundation，避免向 daemon 加载 UIKit。
+- **Hook 点**：`+[NSURLProtocol registerClass:]` + `NSURLSessionConfiguration.protocolClasses`，匹配 `weather-data.apple.com/v3/weather/{locale}/{lat}/{lon}`（iOS 16.1.1 已静态确认）及 `weatherkit.apple.com/api/v*/weather/...` 兼容路径；不直接 Hook Swift async `WeatherKit.WeatherService`。
+- **响应格式**：iOS 16.1.1 静态确认使用 `application/json`（WeatherDaemon/WeatherCore）；同时保留 `application/vnd.apple.flatbuffer` 路径以覆盖其他 iOS 版本。
 - **FlatBuffer**：只做原位标量写入，不重建 buffer，不改变数组长度和字符串。字段索引见 [docs/TECHNICAL_FEASIBILITY.md](docs/TECHNICAL_FEASIBILITY.md)。
 - **单位**：WeatherKit 的数值字段按米制处理：°C、km/h、mm、hPa、m、百分比 0–100、风向 0–359°。QWeather 的 km 能见度会转换成米。
 - **稳定性**：8 秒请求超时（可调）、最多 2 次重试、串行去重、10 分钟 provider 缓存、请求失败回退 Apple 原生数据、补丁字段数为 0 时原样透传。
+
+> iOS 16.1.1 补充（2026-10-20）：WeatherCore 已确认 `weatherDataEndpointUrl = https://weather-data.apple.com`，路径 `/v3/weather/{lang}/{latitude}/{longitude}`，`dataSets` 含 `currentWeather / forecastDaily / forecastHourly / severeWeather` 等；WeatherDaemon 使用 `application/json` 与 `weather-data.db` 缓存。v0.1.1 已加入 `weatherd` 注入与 iOS 16 日预报 `temperatureHigh/Low` 字段适配。
 
 更完整的分析、已验证事实和未验证项见 [docs/TECHNICAL_FEASIBILITY.md](docs/TECHNICAL_FEASIBILITY.md)；限制见 [docs/LIMITATIONS.md](docs/LIMITATIONS.md)。
 

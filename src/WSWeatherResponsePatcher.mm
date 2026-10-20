@@ -169,6 +169,7 @@ static NSInteger WSPatchCurrentDictionary(NSMutableDictionary *current, WSCurren
     }
     if (source.timestamp) {
         if (WSSetJSONTime(current, @"asOf", source.timestamp.doubleValue)) changed++;
+        if (WSSetJSONTime(current, @"date", source.timestamp.doubleValue)) changed++;
     }
     changed += WSPatchMetadataDictionary(current, now, ttl);
     return changed;
@@ -182,7 +183,8 @@ static NSInteger WSPatchHourlyDictionary(NSMutableDictionary *hourly, NSArray<WS
     for (NSUInteger i = 0; i < items.count; i++) {
         NSMutableDictionary *item = WSMutableDictionary(items[i]);
         if (!item) continue;
-        double target = WSTimestampFromJSONValue(item[@"forecastStart"]);
+        id timeValue = item[@"forecastStart"] ?: item[@"date"];
+        double target = WSTimestampFromJSONValue(timeValue);
         WSHourlyWeather *hour = WSMatchHour(source, target, i);
         if (hour) {
             if (WSSetJSONNumber(item, @"temperature", hour.temperature)) changed++;
@@ -220,22 +222,38 @@ static NSInteger WSPatchDailyDictionary(NSMutableDictionary *daily, NSArray<WSDa
     for (NSUInteger i = 0; i < items.count; i++) {
         NSMutableDictionary *item = WSMutableDictionary(items[i]);
         if (!item) continue;
-        double target = WSTimestampFromJSONValue(item[@"forecastStart"]);
+        id timeValue = item[@"forecastStart"] ?: item[@"date"];
+        double target = WSTimestampFromJSONValue(timeValue);
         WSDailyWeather *day = WSMatchDay(source, target, i);
         if (day) {
-            if (WSSetJSONNumber(item, @"temperatureMax", day.temperatureMax)) changed++;
-            if (WSSetJSONNumber(item, @"temperatureMin", day.temperatureMin)) changed++;
+            NSNumber *high = day.temperatureMax;
+            NSNumber *low = day.temperatureMin;
+            if (WSSetJSONNumber(item, @"temperatureHigh", high)) changed++;
+            if (WSSetJSONNumber(item, @"temperatureLow", low)) changed++;
+            if (WSSetJSONNumber(item, @"temperatureMax", high)) changed++;
+            if (WSSetJSONNumber(item, @"temperatureMin", low)) changed++;
+            if (WSSetJSONNumber(item, @"temperatureApparentHigh", day.apparentTemperatureMax)) changed++;
+            if (WSSetJSONNumber(item, @"temperatureApparentLow", day.apparentTemperatureMin)) changed++;
+            if (WSSetJSONNumber(item, @"humidity", day.humidity)) changed++;
             if (WSSetJSONNumber(item, @"humidityMax", day.humidityMax)) changed++;
             if (WSSetJSONNumber(item, @"humidityMin", day.humidityMin)) changed++;
-            if (WSSetJSONNumber(item, @"maxUvIndex", day.maxUvIndex)) changed++;
-            if (WSSetJSONNumber(item, @"uvIndexMax", day.maxUvIndex)) changed++;
+            NSNumber *uv = day.uvIndex ?: day.maxUvIndex;
+            if (WSSetJSONNumber(item, @"uvIndex", uv)) changed++;
+            if (WSSetJSONNumber(item, @"maxUvIndex", uv)) changed++;
+            if (WSSetJSONNumber(item, @"uvIndexMax", uv)) changed++;
             if (WSSetJSONNumber(item, @"precipitationChance", day.precipitationChance)) changed++;
             if (WSSetJSONNumber(item, @"precipitationAmount", day.precipitationAmount)) changed++;
             if (WSSetJSONNumber(item, @"snowfallAmount", day.snowfallAmount)) changed++;
-            if (WSSetJSONNumber(item, @"windSpeedMax", day.windSpeedMax)) changed++;
-            if (WSSetJSONNumber(item, @"windGustSpeedMax", day.windGustSpeedMax)) changed++;
-            if (WSSetJSONNumber(item, @"windGust", day.windGustSpeedMax)) changed++;
+            NSNumber *wind = day.windSpeed ?: day.windSpeedMax;
+            if (WSSetJSONNumber(item, @"windSpeed", wind)) changed++;
+            if (WSSetJSONNumber(item, @"windSpeedMax", day.windSpeedMax ?: wind)) changed++;
             if (WSSetJSONNumber(item, @"windSpeedAvg", day.windSpeedAvg)) changed++;
+            NSNumber *gust = day.windGust ?: day.windGustSpeedMax;
+            if (WSSetJSONNumber(item, @"windGust", gust)) changed++;
+            if (WSSetJSONNumber(item, @"windGustSpeedMax", day.windGustSpeedMax ?: gust)) changed++;
+            if (WSSetJSONNumber(item, @"windDirection", day.windDirection)) changed++;
+            if (WSSetJSONNumber(item, @"pressure", day.pressure)) changed++;
+            if (WSSetJSONNumber(item, @"visibility", day.visibility)) changed++;
             if (day.conditionCode && WSSetJSONCondition(item, day.conditionCode.intValue)) changed++;
         }
         items[i] = item;

@@ -189,10 +189,18 @@ static NSNumber *QDateFromDayString(NSString *string) {
         day.temperatureMax = QNumber(item, @"tempMax");
         day.temperatureMin = QNumber(item, @"tempMin");
         day.maxUvIndex = QClampedInteger(QNumber(item, @"uvIndex"), 0, 20);
+        day.uvIndex = day.maxUvIndex;
+        day.humidity = QClampedInteger(QNumber(item, @"humidity"), 0, 100);
         day.precipitationAmount = QNumber(item, @"precip");
         day.precipitationChance = QClampedInteger(QNumber(item, @"pop"), 0, 100);
         day.windSpeedAvg = QNumber(item, @"windSpeedDay");
+        day.windSpeed = day.windSpeedAvg;
         day.windGustSpeedMax = QNumber(item, @"windGustDay");
+        day.windGust = day.windGustSpeedMax;
+        day.windDirection = QWindDirection(QNumber(item, @"wind360Day"));
+        day.pressure = QNumber(item, @"pressure");
+        NSNumber *dailyVisibilityKm = QNumber(item, @"vis");
+        day.visibility = dailyVisibilityKm ? @(dailyVisibilityKm.doubleValue * 1000.0) : nil;
         int condition = [WSCondition conditionForQWeatherIcon:[item[@"iconDay"] description]];
         if (condition >= 0) day.conditionCode = @(condition);
         if (day.temperatureMax || day.temperatureMin || day.conditionCode) [days addObject:day];

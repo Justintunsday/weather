@@ -13,3 +13,6 @@
 11. **城市覆盖按两位小数经纬度匹配。** 约 1 km 粒度，适合城市/地点，不适合精确到街道的覆盖。
 12. **不修改系统定位权限、TCC 或隐私设置。** 插件只使用天气 App 已获得的查询坐标。
 13. **天气预警来源未替换。** 如果 provider 有本地预警，当前仍显示 Apple 的预警；这是“保留真实来源”的保守选择，不是完整的数据源切换。
+
+14. **v0.1.1 新增 weatherd 注入，但 daemon 沙箱尚未真机验证。** 如果 daemon 无法读取设置域，它可能只能使用默认 Open-Meteo；App/Widget 侧仍会按设置解析。
+15. **iOS 16 日预报 JSON 字段与公开文档不同。** 已适配 `temperatureHigh/Low`、`temperatureApparentHigh/Low`、`humidity`、`uvIndex`、`windSpeed` 等；但每日降水概率/量、气压、能见度是否存在于 iOS 16 JSON 仍需真机确认。

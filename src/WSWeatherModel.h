@@ -60,6 +60,15 @@
 @property (nonatomic, strong) NSNumber *windSpeedMax;
 @property (nonatomic, strong) NSNumber *windGustSpeedMax;
 @property (nonatomic, strong) NSNumber *windSpeedAvg;
+@property (nonatomic, strong) NSNumber *apparentTemperatureMax;
+@property (nonatomic, strong) NSNumber *apparentTemperatureMin;
+@property (nonatomic, strong) NSNumber *humidity;
+@property (nonatomic, strong) NSNumber *uvIndex;
+@property (nonatomic, strong) NSNumber *windSpeed;
+@property (nonatomic, strong) NSNumber *windGust;
+@property (nonatomic, strong) NSNumber *windDirection;
+@property (nonatomic, strong) NSNumber *pressure;
+@property (nonatomic, strong) NSNumber *visibility;
 @property (nonatomic, strong) NSNumber *conditionCode;
 
 - (NSDictionary *)dictionaryRepresentation;

@@ -33,7 +33,9 @@ static NSArray<NSString *> *WSHourlyKeys(void) {
 static NSArray<NSString *> *WSDailyKeys(void) {
     return @[@"timestamp", @"endTimestamp", @"temperatureMax", @"temperatureMin", @"humidityMax",
              @"humidityMin", @"maxUvIndex", @"precipitationChance", @"precipitationAmount",
-             @"snowfallAmount", @"windSpeedMax", @"windGustSpeedMax", @"windSpeedAvg", @"conditionCode"];
+             @"snowfallAmount", @"windSpeedMax", @"windGustSpeedMax", @"windSpeedAvg",
+             @"apparentTemperatureMax", @"apparentTemperatureMin", @"humidity", @"uvIndex",
+             @"windSpeed", @"windGust", @"windDirection", @"pressure", @"visibility", @"conditionCode"];
 }
 
 @implementation WSCurrentWeather
