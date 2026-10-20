@@ -40,6 +40,7 @@
         [entries addObject:@{@"time": @(date.timeIntervalSince1970), @"level": @(level), @"message": date && line.length > 20 ? [line substringFromIndex:20] : line}];
     }
     while (entries.count > 300) [entries removeObjectAtIndex:0];
+    if (!entries.count) [entries addObjectsFromArray:[[WSSettings shared] logEntries]];
     self.entries = [[entries reverseObjectEnumerator] allObjects];
     [self.tableView reloadData];
     if (self.entries.count == 0) {

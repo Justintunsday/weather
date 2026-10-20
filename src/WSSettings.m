@@ -5,6 +5,27 @@
 #import <sys/file.h>
 #import <fcntl.h>
 #import <unistd.h>
+#import <dlfcn.h>
+
+@protocol WSPreferencesRelay <NSObject>
+- (instancetype)initWithIdentifier:(NSString *)identifier;
+- (NSDictionary *)dictionaryRepresentation;
+- (void)setObject:(id)value forKey:(NSString *)key;
+@end
+
+static id<WSPreferencesRelay> WSRelay(void) {
+    static id<WSPreferencesRelay> preferences;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class cls = NSClassFromString(@"HBPreferences");
+        if (!cls) {
+            dlopen("/var/jb/Library/Frameworks/Cephei.framework/Cephei", RTLD_NOW | RTLD_GLOBAL);
+            cls = NSClassFromString(@"HBPreferences");
+        }
+        if (cls) preferences = [(id)[cls alloc] initWithIdentifier:@"com.weathersource.shared"];
+    });
+    return preferences;
+}
 
 static NSString *const kWSSettingsCacheNotification = @"WSSettingsCacheNotification";
 static NSString *const kWSSharedSettingsPath = @"/var/mobile/Library/Weather/WeatherSource-config.plist";
@@ -116,6 +137,11 @@ static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
         }
     }
 
+    id relayValue = [WSRelay() dictionaryRepresentation][key];
+    if (relayValue) {
+        @synchronized (self) { _cache[key] = relayValue; }
+        return relayValue;
+    }
     NSDictionary *sharedPrefs = WSUsesSharedSettings(key) ? [NSDictionary dictionaryWithContentsOfFile:kWSSharedSettingsPath] : nil;
     if (sharedPrefs) {
         id result = sharedPrefs[key] ?: defaultValue;
@@ -149,7 +175,14 @@ static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
 - (BOOL)saveSharedObject:(id)value forKey:(NSString *)key {
     if (!key.length) return NO;
     __block BOOL success = NO;
-    dispatch_sync(_writeQueue, ^{ success = WSWriteSharedSetting(key, value); });
+    dispatch_sync(_writeQueue, ^{
+        id<WSPreferencesRelay> relay = WSRelay();
+        if (relay) {
+            [relay setObject:value forKey:key];
+            id saved = [relay dictionaryRepresentation][key];
+            success = value ? [saved isEqual:value] : saved == nil;
+        }
+    });
     if (!success) return NO;
     [self invalidateCache];
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),
@@ -164,6 +197,7 @@ static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
         _cache[key] = safeValue;
     }
     dispatch_async(_writeQueue, ^{
+        [WSRelay() setObject:value forKey:key];
         BOOL sharedWrite = !WSUsesSharedSettings(key) || WSWriteSharedSetting(key, value);
         if (!sharedWrite) NSLog(@"[WeatherSource] Shared settings write failed for key %@", key);
         if (value) {
@@ -353,6 +387,7 @@ static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
 }
 
 - (void)clearLog {
+    [WSRelay() setObject:@[] forKey:@"logEntries"];
     [@"" writeToFile:@"/var/mobile/Library/Weather/WeatherSource.log" atomically:YES encoding:NSUTF8StringEncoding error:nil];
     [self setObject:@[] forKey:@"logEntries" notify:NO];
 }

@@ -255,7 +255,7 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
         }
     }
     if (![[WSSettings shared] saveSharedObject:value forKey:key]) {
-        [self showConfigurationError:@"无法保存共享配置，请重新安装插件以修复配置文件权限。"];
+            [self showConfigurationError:@"无法保存配置，请确认 Cephei 已安装并在越狱状态下重新打开设置。"];
         [self reloadSpecifier:specifier];
         return;
     }
