@@ -19,42 +19,55 @@ static NSArray<NSString *> *WSProviderTitles(void) {
 static PSSpecifier *WSProviderSpecifier(NSString *name, NSString *key, id target) {
     PSSpecifier *specifier = [PSSpecifier preferenceSpecifierNamed:name
                                                              target:target
-                                                                set:nil
-                                                                get:nil
+                                                                set:@selector(setPreferenceValue:specifier:)
+                                                                get:@selector(readPreferenceValue:)
                                                              detail:[PSListItemsController class]
-                                                               cell:@"PSLinkCell"
+                                                               cell:PSLinkListCell
                                                                edit:nil];
     [specifier setProperty:key forKey:@"key"];
     [specifier setProperty:WS_PREF_DOMAIN forKey:@"defaults"];
     [specifier setProperty:WSProviderValues() forKey:@"values"];
     [specifier setProperty:WSProviderTitles() forKey:@"titles"];
+    [specifier setProperty:WSProviderValues() forKey:@"validValues"];
+    specifier.titleDictionary = [NSDictionary dictionaryWithObjects:WSProviderTitles() forKeys:WSProviderValues()];
     [specifier setProperty:WS_PROVIDER_AUTO forKey:@"default"];
     return specifier;
 }
 
-static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *placeholder, id defaultValue) {
+static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *placeholder, id defaultValue, id target) {
     PSSpecifier *specifier = [PSSpecifier preferenceSpecifierNamed:name
-                                                             target:nil
-                                                                set:nil
-                                                                get:nil
+                                                             target:target
+                                                                set:@selector(setPreferenceValue:specifier:)
+                                                                get:@selector(readPreferenceValue:)
                                                              detail:nil
-                                                               cell:@"PSEditTextCell"
+                                                               cell:([key hasSuffix:@"Key"] ? PSSecureEditTextCell : PSEditTextCell)
                                                                edit:nil];
     [specifier setProperty:key forKey:@"key"];
     [specifier setProperty:WS_PREF_DOMAIN forKey:@"defaults"];
     [specifier setProperty:placeholder ?: @"" forKey:@"placeholder"];
     [specifier setProperty:defaultValue ?: @"" forKey:@"default"];
+    [specifier setProperty:@NO forKey:@"autoCaps"];
+    [specifier setProperty:@NO forKey:@"autoCorrection"];
+    [specifier setProperty:@YES forKey:@"noAutoCorrect"];
+    [specifier setProperty:@(UIKeyboardTypeASCIICapable) forKey:@"keyboard"];
     return specifier;
 }
 
 @implementation WSRootListController
 
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = @"天气数据源";
+}
+
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [[WSSettings shared] invalidateCache];
     [self reloadSpecifiers];
 }
 
-- (NSArray *)specifiers {
+- (NSMutableArray *)specifiers {
+    if (_specifiers) return _specifiers;
     WSSettings *settings = [WSSettings shared];
     NSMutableArray *specifiers = [NSMutableArray array];
 
@@ -68,7 +81,7 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
                                                              set:@selector(setPreferenceValue:specifier:)
                                                              get:@selector(readPreferenceValue:)
                                                           detail:nil
-                                                            cell:@"PSSwitchCell"
+                                                            cell:PSSwitchCell
                                                             edit:nil];
     [enabled setProperty:@"enabled" forKey:@"key"];
     [enabled setProperty:@YES forKey:@"default"];
@@ -79,14 +92,19 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
                                                                 set:@selector(setPreferenceValue:specifier:)
                                                                 get:@selector(readPreferenceValue:)
                                                              detail:nil
-                                                               cell:@"PSSwitchCell"
+                                                               cell:PSSwitchCell
                                                                edit:nil];
     [autoRegion setProperty:@"autoRegion" forKey:@"key"];
     [autoRegion setProperty:@YES forKey:@"default"];
     [specifiers addObject:autoRegion];
 
+    PSSpecifier *global = WSProviderSpecifier(@"全局数据源", @"globalProvider", self);
+    [global setProperty:WS_PROVIDER_OPEN_METEO forKey:@"default"];
+    [global setProperty:@(!settings.autoRegion) forKey:@"enabled"];
+    [specifiers addObject:global];
+
     PSSpecifier *regionGroup = [PSSpecifier groupSpecifierWithName:@"地区默认数据源"];
-    [regionGroup setProperty:@"当没有城市级覆盖时使用。中国大陆在配置 QWeather Key 后默认使用和风天气，否则回退 Open-Meteo。"
+    [regionGroup setProperty:@"开启自动地区时使用地区默认值；关闭时使用全局数据源。城市覆盖始终优先。中国大陆配置 QWeather Key 后自动优先和风天气。"
                    forKey:@"footerText"];
     [specifiers addObject:regionGroup];
 
@@ -98,7 +116,7 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
             ? @"自动"
             : WSProviderShortName(configured);
         NSString *label = [NSString stringWithFormat:@"%@  ·  %@", WSRegionDisplayName(region), shortName];
-        [specifiers addObject:WSProviderSpecifier(label, WSRegionProviderKey(region), nil)];
+        [specifiers addObject:WSProviderSpecifier(label, WSRegionProviderKey(region), self)];
     }
 
     PSSpecifier *locationGroup = [PSSpecifier groupSpecifierWithName:@"已发现位置"];
@@ -115,7 +133,7 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
         NSString *provider = [entry[@"provider"] isKindOfClass:[NSString class]] ? entry[@"provider"] : @"";
         NSString *providerName = provider.length ? WSProviderShortName(provider) : @"未知";
         NSString *label = [NSString stringWithFormat:@"%@  ·  %@", name, providerName];
-        [specifiers addObject:WSProviderSpecifier(label, WSOverrideKey(latitude, longitude), nil)];
+        [specifiers addObject:WSProviderSpecifier(label, WSOverrideKey(latitude, longitude), self)];
     }
 
     PSSpecifier *addLocation = [PSSpecifier preferenceSpecifierNamed:@"手动添加位置"
@@ -123,20 +141,19 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
                                                                  set:nil
                                                                  get:nil
                                                               detail:nil
-                                                                cell:@"PSButtonCell"
+                                                                cell:PSButtonCell
                                                                 edit:nil];
-    [addLocation setProperty:NSStringFromSelector(@selector(addLocation)) forKey:@"action"];
+    addLocation.buttonAction = @selector(addLocation);
     [specifiers addObject:addLocation];
 
     PSSpecifier *advanced = [PSSpecifier groupSpecifierWithName:@"高级"];
     [advanced setProperty:@"缓存时间与请求超时单位为秒。缩短缓存可更快看到新数据，但会增加 API 调用。"
                 forKey:@"footerText"];
     [specifiers addObject:advanced];
-    [specifiers addObject:WSTextSpecifier(@"缓存时间（秒）", @"cacheTTL", @"600", @"600")];
-    [specifiers addObject:WSTextSpecifier(@"请求超时（秒）", @"requestTimeout", @"8", @"8")];
-    [specifiers addObject:WSTextSpecifier(@"最小刷新间隔（秒）", @"minRefreshInterval", @"60", @"60")];
+    [specifiers addObject:WSTextSpecifier(@"缓存时间（秒）", @"cacheTTL", @"600", @"600", self)];
+    [specifiers addObject:WSTextSpecifier(@"请求超时（秒）", @"requestTimeout", @"8", @"8", self)];
 
-    PSSpecifier *fallback = WSProviderSpecifier(@"备用数据源", @"fallbackProvider", nil);
+    PSSpecifier *fallback = WSProviderSpecifier(@"备用数据源", @"fallbackProvider", self);
     [fallback setProperty:WS_PROVIDER_OPEN_METEO forKey:@"default"];
     [specifiers addObject:fallback];
 
@@ -145,33 +162,43 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
                                                              set:nil
                                                              get:nil
                                                           detail:nil
-                                                            cell:@"PSButtonCell"
+                                                            cell:PSButtonCell
                                                             edit:nil];
-    [refresh setProperty:NSStringFromSelector(@selector(refreshTweak)) forKey:@"action"];
+    refresh.buttonAction = @selector(refreshTweak);
     [specifiers addObject:refresh];
 
     PSSpecifier *keys = [PSSpecifier groupSpecifierWithName:@"API Key"];
-    [keys setProperty:@"Key 保存在越狱偏好设置 plist 中，未硬编码进源码；请勿在共享设备上使用付费 Key。日志不会记录完整 Key。"
+    [keys setProperty:@"Key 保存在共享配置文件中。输入完成后按键盘完成或轻点其他行保存；保存失败会提示。Host 只填域名，不含 https:// 或路径。"
              forKey:@"footerText"];
     [specifiers addObject:keys];
-    [specifiers addObject:WSTextSpecifier(@"和风天气 Key", @"qweatherKey", @"QWeather API Key", @"")];
-    [specifiers addObject:WSTextSpecifier(@"和风天气 Host", @"qweatherHost", @"devapi.qweather.com", @"devapi.qweather.com")];
-    [specifiers addObject:WSTextSpecifier(@"台湾 CWA Key（预留）", @"cwaKey", @"CWA API Key", @"")];
-    [specifiers addObject:WSTextSpecifier(@"韩国 KMA Key（预留）", @"kmaKey", @"KMA API Key", @"")];
+    [specifiers addObject:WSTextSpecifier(@"和风天气 Key", @"qweatherKey", @"QWeather API Key", @"", self)];
+    [specifiers addObject:WSTextSpecifier(@"和风天气 Host", @"qweatherHost", @"devapi.qweather.com", @"devapi.qweather.com", self)];
+    [specifiers addObject:WSTextSpecifier(@"台湾 CWA Key（预留）", @"cwaKey", @"CWA API Key", @"", self)];
+    [specifiers addObject:WSTextSpecifier(@"韩国 KMA Key（预留）", @"kmaKey", @"KMA API Key", @"", self)];
 
     PSSpecifier *logs = [PSSpecifier groupSpecifierWithName:@"日志"];
-    [logs setProperty:@"记录每次请求的位置、地区、实际数据源与补丁字段数。日志文件：/tmp/WeatherSource.log"
+    [logs setProperty:@"显示天气 App 与小组件的共享日志。调试级别会保存包含查询位置的响应文件；日常使用建议选择普通。"
             forKey:@"footerText"];
     [specifiers addObject:logs];
+
+    PSSpecifier *level = WSProviderSpecifier(@"日志级别", @"logLevel", self);
+    NSArray *levels = @[@0, @1, @2, @3];
+    NSArray *levelTitles = @[@"关闭", @"错误与警告", @"普通", @"调试（保存响应）"];
+    [level setProperty:levels forKey:@"values"];
+    [level setProperty:levels forKey:@"validValues"];
+    [level setProperty:levelTitles forKey:@"titles"];
+    level.titleDictionary = [NSDictionary dictionaryWithObjects:levelTitles forKeys:levels];
+    [level setProperty:@2 forKey:@"default"];
+    [specifiers addObject:level];
 
     PSSpecifier *viewLogs = [PSSpecifier preferenceSpecifierNamed:@"查看 API / 异常日志"
                                                            target:self
                                                               set:nil
                                                               get:nil
                                                            detail:nil
-                                                             cell:@"PSButtonCell"
+                                                             cell:PSButtonCell
                                                              edit:nil];
-    [viewLogs setProperty:NSStringFromSelector(@selector(openLogs)) forKey:@"action"];
+    viewLogs.buttonAction = @selector(openLogs);
     [specifiers addObject:viewLogs];
 
     PSSpecifier *clearLogs = [PSSpecifier preferenceSpecifierNamed:@"清空日志"
@@ -179,17 +206,18 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
                                                                set:nil
                                                                get:nil
                                                             detail:nil
-                                                              cell:@"PSButtonCell"
+                                                              cell:PSButtonCell
                                                               edit:nil];
-    [clearLogs setProperty:NSStringFromSelector(@selector(confirmClearLog)) forKey:@"action"];
+    clearLogs.buttonAction = @selector(confirmClearLog);
     [specifiers addObject:clearLogs];
 
     PSSpecifier *about = [PSSpecifier groupSpecifierWithName:@"关于与限制"];
-    [about setProperty:@"v0.1.5 MVP：已接入 Open-Meteo 与可选 QWeather；HKO/SMG/CWA/NWS/JMA/KMA 尚未验证接入，选择后会回退。天气预警、空气质量、分钟级降水与 Apple 原生归属信息默认保留。"
+    [about setProperty:@"WeatherSource " @WS_VERSION @"：已接入 Open-Meteo 与可选 QWeather；HKO/SMG/CWA/NWS/JMA/KMA 尚未接入，选择后会回退。天气预警、空气质量、分钟级降水与 Apple 原生归属信息保留。"
              forKey:@"footerText"];
     [specifiers addObject:about];
 
-    return specifiers;
+    _specifiers = specifiers;
+    return _specifiers;
 }
 
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
@@ -203,13 +231,45 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:@"key"];
     if (!key.length) return;
-    [[WSSettings shared] setObject:value forKey:key];
+    if ([value isKindOfClass:[NSString class]]) value = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSDictionary *ranges = @{@"cacheTTL": @[@30, @21600], @"requestTimeout": @[@2, @30], @"minRefreshInterval": @[@10, @3600]};
+    NSArray *range = ranges[key];
+    if (range) {
+        NSScanner *scanner = [NSScanner scannerWithString:[value description]];
+        double number = 0;
+        if (![scanner scanDouble:&number] || !scanner.isAtEnd || !isfinite(number) || number < [range[0] doubleValue] || number > [range[1] doubleValue]) {
+            [self showConfigurationError:[NSString stringWithFormat:@"请输入 %@ 到 %@ 之间的秒数。", range[0], range[1]]];
+            [self reloadSpecifier:specifier];
+            return;
+        }
+        value = @(number);
+    }
+    if ([key isEqualToString:@"qweatherHost"] && [value length]) {
+        NSURLComponents *host = [NSURLComponents componentsWithString:[@"https://" stringByAppendingString:value]];
+        if (!host.host.length || host.path.length || host.query.length || host.fragment.length || host.user.length || host.port) {
+            [self showConfigurationError:@"Host 只填写域名，例如 abc.qweatherapi.com，不含协议、端口或路径。"];
+            [self reloadSpecifier:specifier];
+            return;
+        }
+    }
+    if (![[WSSettings shared] saveSharedObject:value forKey:key]) {
+        [self showConfigurationError:@"无法保存共享配置，请重新安装插件以修复配置文件权限。"];
+        [self reloadSpecifier:specifier];
+        return;
+    }
     if ([key isEqualToString:@"enabled"] || [key isEqualToString:@"autoRegion"]) {
         [self reloadSpecifiers];
     }
 }
 
+- (void)showConfigurationError:(NSString *)message {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"配置未保存" message:message preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"好" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
 - (void)refreshTweak {
+    [self.view endEditing:YES];
     [[WSSettings shared] invalidateCache];
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),
                                          CFSTR(WS_NOTIFY_REFRESH_REQUESTED),
@@ -241,10 +301,12 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
     [alert addAction:[UIAlertAction actionWithTitle:@"保存" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
-        double latitude = alert.textFields[0].text.doubleValue;
-        double longitude = alert.textFields[1].text.doubleValue;
+        NSScanner *latScanner = [NSScanner scannerWithString:alert.textFields[0].text ?: @""];
+        NSScanner *lonScanner = [NSScanner scannerWithString:alert.textFields[1].text ?: @""];
+        double latitude = NAN, longitude = NAN;
+        BOOL valid = [latScanner scanDouble:&latitude] && latScanner.isAtEnd && [lonScanner scanDouble:&longitude] && lonScanner.isAtEnd;
         NSString *name = [alert.textFields[2].text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+        if (!valid || !isfinite(latitude) || !isfinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
             UIAlertController *error = [UIAlertController alertControllerWithTitle:@"坐标无效"
                                                                           message:@"纬度需在 -90~90，经度需在 -180~180。"
                                                                    preferredStyle:UIAlertControllerStyleAlert];

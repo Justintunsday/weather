@@ -6,7 +6,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = WeatherSource
 WeatherSource_FILES = Tweak.xm $(wildcard src/*.m) $(wildcard src/*.mm)
-WeatherSource_CFLAGS = -fobjc-arc -Wno-nullability-completeness -Wno-error=unguarded-availability-new -I$(THEOS_PROJECT_DIR)/src -DWS_VERSION=\"0.1.10\"
+WeatherSource_CFLAGS = -fobjc-arc -Wno-nullability-completeness -Wno-error=unguarded-availability-new -I$(THEOS_PROJECT_DIR)/src -DWS_VERSION=\"0.1.11\"
 WeatherSource_CCFLAGS = -fobjc-arc -Wno-nullability-completeness -Wno-error=unguarded-availability-new -std=c++17 -I$(THEOS_PROJECT_DIR)/src
 WeatherSource_FRAMEWORKS = Foundation
 WeatherSource_INSTALL_PATH = /Library/MobileSubstrate/DynamicLibraries
@@ -15,8 +15,9 @@ BUNDLE_NAME = WeatherSourcePrefs
 WeatherSourcePrefs_FILES = prefs/WSRootListController.m prefs/WSLogController.m src/WSSettings.m
 WeatherSourcePrefs_INSTALL_PATH = /Library/PreferenceBundles
 WeatherSourcePrefs_FRAMEWORKS = UIKit Foundation
+WeatherSourcePrefs_PRIVATE_FRAMEWORKS = Preferences
 WeatherSourcePrefs_RESOURCE_DIRS = prefs/Resources
-WeatherSourcePrefs_CFLAGS = -fobjc-arc -Wno-nullability-completeness -Wno-error=unguarded-availability-new -I$(THEOS_PROJECT_DIR)/src -DWS_VERSION=\"0.1.10\"
+WeatherSourcePrefs_CFLAGS = -fobjc-arc -Wno-nullability-completeness -Wno-error=unguarded-availability-new -I$(THEOS_PROJECT_DIR)/src -DWS_VERSION=\"0.1.11\"
 WeatherSourcePrefs_LDFLAGS = -Wl,-undefined,dynamic_lookup
 
 include $(THEOS_MAKE_PATH)/tweak.mk

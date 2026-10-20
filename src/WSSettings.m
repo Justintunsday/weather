@@ -146,6 +146,17 @@ static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
     [self setObject:value forKey:key notify:YES];
 }
 
+- (BOOL)saveSharedObject:(id)value forKey:(NSString *)key {
+    if (!key.length) return NO;
+    __block BOOL success = NO;
+    dispatch_sync(_writeQueue, ^{ success = WSWriteSharedSetting(key, value); });
+    if (!success) return NO;
+    [self invalidateCache];
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),
+                                         CFSTR(WS_NOTIFY_SETTINGS_CHANGED), NULL, NULL, true);
+    return YES;
+}
+
 - (void)setObject:(id)value forKey:(NSString *)key notify:(BOOL)notify {
     if (!key) return;
     id safeValue = value ?: [NSNull null];
@@ -342,6 +353,7 @@ static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
 }
 
 - (void)clearLog {
+    [@"" writeToFile:@"/var/mobile/Library/Weather/WeatherSource.log" atomically:YES encoding:NSUTF8StringEncoding error:nil];
     [self setObject:@[] forKey:@"logEntries" notify:NO];
 }
 

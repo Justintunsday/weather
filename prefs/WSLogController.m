@@ -28,7 +28,18 @@
 }
 
 - (void)reloadEntries {
-    NSArray<NSDictionary *> *entries = [[WSSettings shared] logEntries];
+    NSString *text = [NSString stringWithContentsOfFile:@"/var/mobile/Library/Weather/WeatherSource.log" encoding:NSUTF8StringEncoding error:nil];
+    NSMutableArray<NSDictionary *> *entries = [NSMutableArray array];
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+    formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    for (NSString *line in [text componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]]) {
+        if (!line.length) continue;
+        NSDate *date = line.length >= 19 ? [formatter dateFromString:[line substringToIndex:19]] : nil;
+        NSInteger level = [line containsString:@"[ERROR]"] ? 0 : [line containsString:@"[WARN]"] ? 1 : [line containsString:@"[DEBUG]"] ? 3 : 2;
+        [entries addObject:@{@"time": @(date.timeIntervalSince1970), @"level": @(level), @"message": date && line.length > 20 ? [line substringFromIndex:20] : line}];
+    }
+    while (entries.count > 300) [entries removeObjectAtIndex:0];
     self.entries = [[entries reverseObjectEnumerator] allObjects];
     [self.tableView reloadData];
     if (self.entries.count == 0) {

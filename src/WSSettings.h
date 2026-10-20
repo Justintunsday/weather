@@ -16,6 +16,7 @@
 
 - (void)setObject:(id)value forKey:(NSString *)key;
 - (void)setObject:(id)value forKey:(NSString *)key notify:(BOOL)notify;
+- (BOOL)saveSharedObject:(id)value forKey:(NSString *)key;
 
 - (BOOL)enabled;
 - (BOOL)autoRegion;
