@@ -1,0 +1,10 @@
+Package: com.weathersource.tweak
+Name: WeatherSource
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: Per-location weather data provider switching for Apple Weather (rootless / ElleKit).
+Maintainer: WeatherSource
+Author: WeatherSource
+Section: Tweaks
+Depends: firmware (>= 16.0), ellekit
+Icon: file:///var/jb/Library/PreferenceBundles/WeatherSourcePrefs.bundle/icon.png

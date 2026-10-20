@@ -1,0 +1,9 @@
+{
+    Filter = {
+        Bundles = (
+            "com.apple.weather",
+            "com.apple.weather.widget",
+            "com.apple.weather.poster"
+        );
+    };
+}

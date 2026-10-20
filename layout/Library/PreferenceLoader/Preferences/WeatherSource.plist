@@ -1,0 +1,8 @@
+{
+    entry = {
+        bundle = "WeatherSourcePrefs";
+        cell = "PSLinkCell";
+        detail = "WSRootListController";
+        label = "天气数据源";
+    };
+}

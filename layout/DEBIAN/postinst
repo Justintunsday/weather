@@ -1,0 +1,6 @@
+#!/bin/sh
+
+killall -9 Weather 2>/dev/null || true
+killall -9 WeatherWidget 2>/dev/null || true
+
+exit 0
