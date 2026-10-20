@@ -171,7 +171,8 @@ static NSNumber *QDateFromDayString(NSString *string) {
         hour.precipitationChance = QClampedInteger(QNumber(item, @"pop"), 0, 100);
         hour.precipitationAmount = QNumber(item, @"precip");
         hour.dewPoint = QNumber(item, @"dew");
-        hour.visibility = QNumber(item, @"vis") ? @(QNumber(item, @"vis").doubleValue * 1000.0) : nil;
+        NSNumber *hourVisibilityKm = QNumber(item, @"vis");
+        hour.visibility = hourVisibilityKm ? @(hourVisibilityKm.doubleValue * 1000.0) : nil;
         hour.uvIndex = QClampedInteger(QNumber(item, @"uvIndex"), 0, 20);
         int condition = [WSCondition conditionForQWeatherIcon:[item[@"icon"] description]];
         if (condition >= 0) hour.conditionCode = @(condition);
@@ -209,7 +210,8 @@ static NSNumber *QDateFromDayString(NSString *string) {
         current.pressure = QNumber(now, @"pressure");
         current.windSpeed = QNumber(now, @"windSpeed");
         current.windDirection = QWindDirection(QNumber(now, @"wind360"));
-        current.visibility = QNumber(now, @"vis") ? @(QNumber(now, @"vis").doubleValue * 1000.0) : nil;
+        NSNumber *currentVisibilityKm = QNumber(now, @"vis");
+        current.visibility = currentVisibilityKm ? @(currentVisibilityKm.doubleValue * 1000.0) : nil;
         current.cloudCover = QClampedInteger(QNumber(now, @"cloud"), 0, 100);
         current.precipitationAmount1h = QNumber(now, @"precip");
         current.dewPoint = QNumber(now, @"dew");
