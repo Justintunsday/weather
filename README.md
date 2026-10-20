@@ -9,7 +9,7 @@
 
 ## 下载
 
-- [GitHub Release v0.1.1（rootless .deb）](https://github.com/Justintunsday/weather/releases/tag/v0.1.1)
+- [GitHub Release v0.1.2（rootless .deb）](https://github.com/Justintunsday/weather/releases/tag/v0.1.2)
 - GitHub Actions 制品：`WeatherSource-rootless-deb`
 - 最近一次成功构建：run 39430834708（v0.1.1）
 
@@ -68,7 +68,7 @@ export THEOS=$HOME/theos
 make package FINALPACKAGE=1
 ```
 
-产物：`packages/com.weathersource.tweak_0.1.1_iphoneos-arm64.deb`。
+产物：`packages/com.weathersource.tweak_0.1.2_iphoneos-arm64.deb`。
 
 ## 技术路线（简述）
 
