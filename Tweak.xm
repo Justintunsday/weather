@@ -137,8 +137,8 @@ static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuratio
 %ctor {
     @autoreleasepool {
         NSString *processName = [[NSProcessInfo processInfo] processName] ?: @"?";
-        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.7", getpid(), processName);
-        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.7 date=%@\n",
+        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.8", getpid(), processName);
+        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.8 date=%@\n",
                             getpid(), processName, [NSDate date]];
         NSArray<NSString *> *markerPaths = @[
             @"/var/mobile/Library/Weather/WeatherSource-ctor.txt",

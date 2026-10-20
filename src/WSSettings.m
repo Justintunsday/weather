@@ -2,8 +2,33 @@
 #import "WSShared.h"
 
 #import <CoreFoundation/CoreFoundation.h>
+#import <sys/file.h>
+#import <fcntl.h>
+#import <unistd.h>
 
 static NSString *const kWSSettingsCacheNotification = @"WSSettingsCacheNotification";
+static NSString *const kWSSharedSettingsPath = @"/var/mobile/Library/Weather/WeatherSource-config.plist";
+
+static BOOL WSUsesSharedSettings(NSString *key) {
+    // High-volume diagnostic entries stay local; user settings and locations are shared.
+    return ![key isEqualToString:@"logEntries"];
+}
+
+static BOOL WSWriteSharedSetting(NSString *key, id value) {
+    NSString *lockPath = [kWSSharedSettingsPath stringByAppendingString:@".lock"];
+    int fd = open(lockPath.fileSystemRepresentation, O_CREAT | O_RDWR, 0600);
+    if (fd < 0) return NO;
+    if (flock(fd, LOCK_EX) != 0) { close(fd); return NO; }
+    NSMutableDictionary *dictionary = [[NSDictionary dictionaryWithContentsOfFile:kWSSharedSettingsPath] mutableCopy];
+    if (!dictionary) dictionary = [NSMutableDictionary dictionary];
+    if (value) dictionary[key] = value;
+    else [dictionary removeObjectForKey:key];
+    BOOL success = [dictionary writeToFile:kWSSharedSettingsPath atomically:YES];
+    if (success) [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions: @0600} ofItemAtPath:kWSSharedSettingsPath error:nil];
+    flock(fd, LOCK_UN);
+    close(fd);
+    return success;
+}
 
 static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
                                      void *observer,
@@ -91,6 +116,12 @@ static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
         }
     }
 
+    NSDictionary *sharedPrefs = WSUsesSharedSettings(key) ? [NSDictionary dictionaryWithContentsOfFile:kWSSharedSettingsPath] : nil;
+    if (sharedPrefs) {
+        id result = sharedPrefs[key] ?: defaultValue;
+        @synchronized (self) { _cache[key] = result ?: [NSNull null]; }
+        return result;
+    }
     CFPreferencesAppSynchronize((__bridge CFStringRef)WS_PREF_DOMAIN);
     CFPropertyListRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)key,
                                                         (__bridge CFStringRef)WS_PREF_DOMAIN);
@@ -122,6 +153,8 @@ static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
         _cache[key] = safeValue;
     }
     dispatch_async(_writeQueue, ^{
+        BOOL sharedWrite = !WSUsesSharedSettings(key) || WSWriteSharedSetting(key, value);
+        if (!sharedWrite) NSLog(@"[WeatherSource] Shared settings write failed for key %@", key);
         if (value) {
             CFPreferencesSetAppValue((__bridge CFStringRef)key,
                                      (__bridge CFPropertyListRef)value,

@@ -1,5 +1,18 @@
 #!/bin/sh
 
+mkdir -p /var/mobile/Library/Weather
+config=/var/mobile/Library/Weather/WeatherSource-config.plist
+if [ ! -e "$config" ]; then
+    if [ -f /var/mobile/Library/Preferences/com.weathersource.tweak.plist ]; then
+        cp /var/mobile/Library/Preferences/com.weathersource.tweak.plist "$config"
+    else
+        printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict/></plist>' > "$config"
+    fi
+fi
+touch "$config.lock"
+chown mobile:mobile "$config" "$config.lock"
+chmod 600 "$config" "$config.lock"
+
 killall -9 Weather 2>/dev/null || true
 killall -9 WeatherWidget 2>/dev/null || true
 killall -9 weatherd 2>/dev/null || true
