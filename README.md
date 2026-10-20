@@ -5,6 +5,7 @@
 ![Build](https://github.com/Justintunsday/weather/actions/workflows/build.yml/badge.svg)
 
 > **状态：MVP / 已确认目标真机执行 Open-Meteo 响应补丁。**
+> v0.1.10 已修复 JSON 百分比单位与历史时段匹配，通过 CI 回归检查及真机补丁前后响应对比。详见 [真机验证记录](docs/DEVICE_VERIFICATION.md)。
 > 2026-10-20，在 iPhone SE 2（iPhone12,8）/ iOS 16.1.1 / Dopamine / ElleKit 上，v0.1.8 日志确认 Weather App 的香港查询替换 4007 个字段，WeatherWidget 替换 519 个字段。尚未完成全部字段、城市、界面及其他数据源的核验，不能视为完整功能验收。识别失败、请求超时或数据源不可用时返回 Apple 原始响应。
 
 ## 下载
@@ -76,7 +77,7 @@ make package FINALPACKAGE=1
 - **Hook 点**：注册 NSURLProtocol，并在 URLSession 创建时将其写入配置列表首位；另有 completion handler 响应补丁兜底，并通过响应标记避免重复处理。
 - **响应格式**：iOS 16.1.1 静态确认使用 `application/json`（WeatherDaemon/WeatherCore）；同时保留 `application/vnd.apple.flatbuffer` 路径以覆盖其他 iOS 版本。
 - **FlatBuffer**：只做原位标量写入，不重建 buffer，不改变数组长度和字符串。字段索引见 [docs/TECHNICAL_FEASIBILITY.md](docs/TECHNICAL_FEASIBILITY.md)。
-- **单位**：WeatherKit 的数值字段按米制处理：°C、km/h、mm、hPa、m、百分比 0–100、风向 0–359°。QWeather 的 km 能见度会转换成米。
+- **单位**：内部模型使用 °C、km/h、mm、hPa、m、百分比 0–100、风向 0–359°。Apple JSON 的湿度、云量和降水概率转换为 0–1；FlatBuffer 保留整数百分比。QWeather 的 km 能见度会转换成米。
 - **稳定性**：8 秒请求超时（可调）、最多 2 次重试、串行去重、10 分钟 provider 缓存、请求失败回退 Apple 原生数据、补丁字段数为 0 时原样透传。
 
 > iOS 16.1.1 补充（2026-10-20）：WeatherCore 已确认 `weatherDataEndpointUrl = https://weather-data.apple.com`，路径 `/v3/weather/{lang}/{latitude}/{longitude}`，`dataSets` 含 `currentWeather / forecastDaily / forecastHourly / severeWeather` 等；WeatherDaemon 使用 `application/json` 与 `weather-data.db` 缓存。v0.1.1 已加入 `weatherd` 注入与 iOS 16 日预报 `temperatureHigh/Low` 字段适配。
