@@ -284,6 +284,7 @@ static NSDictionary *WSParseWeatherURL(NSURL *url) {
         }
 
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        NSString *dumpBase = nil;
         if ([[WSSettings shared] logLevel] >= 3 && data.length) {
             static NSInteger dumpCount = 0;
             NSInteger dumpIndex = -1;
@@ -295,6 +296,7 @@ static NSDictionary *WSParseWeatherURL(NSURL *url) {
             }
             if (dumpIndex >= 0) {
                 NSString *base = [NSString stringWithFormat:@"/var/mobile/Library/Weather/WeatherSource-response-%d-%ld", getpid(), (long)dumpIndex];
+                dumpBase = base;
                 [data writeToFile:[base stringByAppendingString:@".bin"] atomically:YES];
                 [httpResponse.MIMEType writeToFile:[base stringByAppendingString:@".type.txt"]
                                         atomically:YES
@@ -340,6 +342,7 @@ static NSDictionary *WSParseWeatherURL(NSURL *url) {
                     [WSLogger warning:@"Patch produced no changes for %@ (schema mismatch?)", httpResponse.URL.path];
                 }
             }
+            if (dumpBase) [patched writeToFile:[dumpBase stringByAppendingString:@".patched.bin"] atomically:YES];
             [strongSelf deliverResponse:httpResponse
                                    data:patched
                              providerID:(changed > 0 ? strongSelf.providerID : nil)
