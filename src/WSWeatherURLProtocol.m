@@ -9,6 +9,7 @@
 
 #import <math.h>
 #import <stdlib.h>
+#import <unistd.h>
 
 static NSString *const WSForwardedPropertyKey = @"com.weathersource.forwarded";
 static NSString *const WSForwardedHeader = @"X-WeatherSource-Forwarded";
@@ -76,13 +77,8 @@ static NSDictionary *WSParseWeatherURL(NSURL *url) {
         }
     }
 
-    if (!country.length && locale.length) {
-        NSArray<NSString *> *localeParts = [locale componentsSeparatedByString:@"-"];
-        NSString *last = localeParts.lastObject;
-        if (last.length == 2 && [[NSCharacterSet uppercaseLetterCharacterSet] characterIsMember:[last characterAtIndex:0]]) {
-            country = last.uppercaseString;
-        }
-    }
+    // Locale describes presentation language, not the queried city's country.
+    // For example, en-US is also used when requesting mainland Chinese cities.
 
     NSString *version = nil;
     if (weatherIndex > 0) {
@@ -298,7 +294,7 @@ static NSDictionary *WSParseWeatherURL(NSURL *url) {
                 }
             }
             if (dumpIndex >= 0) {
-                NSString *base = [NSString stringWithFormat:@"/tmp/WeatherSource-response-%ld", (long)dumpIndex];
+                NSString *base = [NSString stringWithFormat:@"/var/mobile/Library/Weather/WeatherSource-response-%d-%ld", getpid(), (long)dumpIndex];
                 [data writeToFile:[base stringByAppendingString:@".bin"] atomically:YES];
                 [httpResponse.MIMEType writeToFile:[base stringByAppendingString:@".type.txt"]
                                         atomically:YES

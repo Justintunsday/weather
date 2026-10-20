@@ -4,18 +4,18 @@
 
 ![Build](https://github.com/Justintunsday/weather/actions/workflows/build.yml/badge.svg)
 
-> **状态：MVP / 运行时尚未在目标设备完成验证。**
-> 目标设备 iPhone SE 2（iPhone12,8）iOS 16.1.1 在开发过程中重启并失去越狱 SSH，因此本仓库暂未完成真机运行测试。源码、构建脚本和 FlatBuffer/JSON 适配层已实现；请以 GitHub Actions 的编译结果和实际安装日志为准。插件在识别失败、schema 不匹配、请求超时或数据源不可用时始终回退到 Apple 原生数据，不会伪造字段。
+> **状态：MVP / 已确认目标真机执行 Open-Meteo 响应补丁。**
+> 2026-10-20，在 iPhone SE 2（iPhone12,8）/ iOS 16.1.1 / Dopamine / ElleKit 上，v0.1.8 日志确认 Weather App 的香港查询替换 4007 个字段，WeatherWidget 替换 519 个字段。尚未完成全部字段、城市、界面及其他数据源的核验，不能视为完整功能验收。识别失败、请求超时或数据源不可用时返回 Apple 原始响应。
 
 ## 下载
 
 - [GitHub Release v0.1.2（rootless .deb）](https://github.com/Justintunsday/weather/releases/tag/v0.1.2)
 - GitHub Actions 制品：`WeatherSource-rootless-deb`
-- 最近一次成功构建：run 39430834708（v0.1.1）
+- 已真机验证响应补丁的构建：[v0.1.8 / run 39438165971](https://github.com/Justintunsday/weather/actions/runs/39438165971)
 
 ## 它做什么
 
-Apple 天气 App 在 iOS 16 通过 `weatherkit.apple.com` 拉取预报。WeatherSource 不替换 App 界面，而是在天气 App / 天气小组件进程内拦截 `/api/v1|v2/weather/...` 响应：
+目标固件上已观察到 App 使用 `weatherkit.apple.com`、Widget 使用 `weather-data.apple.com`，路径均为 `/v3/weather/{locale}/{lat}/{lon}`。WeatherSource 在进程内拦截这些响应，同时保留旧版本路径兼容：
 
 1. 从请求 URL 读取经纬度、语言、国家与 `dataSets`。
 2. 按经纬度 + 国家判断地区；再按地区默认值或城市级覆盖选择数据源。
@@ -57,23 +57,23 @@ Apple 天气 App 在 iOS 16 通过 `weatherkit.apple.com` 拉取预报。Weather
 - 缓存时间、请求超时、最小刷新间隔、备用数据源
 - 查看 / 清空 API 与异常日志
 
-设置页中的 Key 保存在越狱偏好 plist（`/var/mobile/Library/Preferences/com.weathersource.tweak.plist`），没有硬编码进源码。日志会隐藏完整 Key；但这不是 Keychain 级安全存储，请勿在共享设备上使用付费 Key。
+v0.1.8 起，用户设置优先读取共享文件 `/var/mobile/Library/Weather/WeatherSource-config.plist`，写入使用文件锁和原子替换，文件权限为 `0600`。文件不可读时保留旧 CFPreferences 回退。已确认 Weather App/Widget 可写入位置记录；Settings 设置页的 Key 写入及跨进程生效仍需操作验证。Key 没有硬编码进源码，此文件也不是 Keychain。
 
 ## 构建
 
-GitHub Actions 会自动构建 rootless `.deb`。本地构建需要 Theos、`ldid`、`dpkg` 和 iPhoneOS 16.5 SDK：
+GitHub Actions 会自动构建 rootless `.deb`。本地构建需要 Theos、`ldid`、`dpkg` 和 iPhoneOS 17.5 SDK：
 
 ```bash
 export THEOS=$HOME/theos
 make package FINALPACKAGE=1
 ```
 
-产物：`packages/com.weathersource.tweak_0.1.2_iphoneos-arm64.deb`。
+产物：`packages/com.weathersource.tweak_<version>_iphoneos-arm64.deb`。
 
 ## 技术路线（简述）
 
 - **注入进程**：`com.apple.weather`（Weather App）、`com.apple.weather.widget`（小组件/锁屏小组件）、`com.apple.weather.poster`，以及 `weatherd`（`Executables`，iOS 16.1.1 的获取/缓存进程）。核心 tweak 只链 Foundation，避免向 daemon 加载 UIKit。
-- **Hook 点**：`+[NSURLProtocol registerClass:]` + `NSURLSessionConfiguration.protocolClasses`，匹配 `weather-data.apple.com/v3/weather/{locale}/{lat}/{lon}`（iOS 16.1.1 已静态确认）及 `weatherkit.apple.com/api/v*/weather/...` 兼容路径；不直接 Hook Swift async `WeatherKit.WeatherService`。
+- **Hook 点**：注册 NSURLProtocol，并在 URLSession 创建时将其写入配置列表首位；另有 completion handler 响应补丁兜底，并通过响应标记避免重复处理。
 - **响应格式**：iOS 16.1.1 静态确认使用 `application/json`（WeatherDaemon/WeatherCore）；同时保留 `application/vnd.apple.flatbuffer` 路径以覆盖其他 iOS 版本。
 - **FlatBuffer**：只做原位标量写入，不重建 buffer，不改变数组长度和字符串。字段索引见 [docs/TECHNICAL_FEASIBILITY.md](docs/TECHNICAL_FEASIBILITY.md)。
 - **单位**：WeatherKit 的数值字段按米制处理：°C、km/h、mm、hPa、m、百分比 0–100、风向 0–359°。QWeather 的 km 能见度会转换成米。
@@ -89,19 +89,19 @@ make package FINALPACKAGE=1
 把日志级别设为 Debug（设置页日志级别 3）后，插件会把前 3 个 Apple 原始响应保存到：
 
 ```text
-/tmp/WeatherSource-response-0.bin
-/tmp/WeatherSource-response-0.type.txt
-/tmp/WeatherSource-response-0.url.txt
+/var/mobile/Library/Weather/WeatherSource-response-<pid>-0.bin
+/var/mobile/Library/Weather/WeatherSource-response-<pid>-0.type.txt
+/var/mobile/Library/Weather/WeatherSource-response-<pid>-0.url.txt
 ```
 
-用于确认 iOS 16 的实际 JSON/FlatBuffer 结构和 Content-Type。文件包含查询坐标，请勿公开分享；确认后可在设置页清空日志或手动删除。
+v0.1.9 起使用上述共享目录，用于确认实际响应结构与 Content-Type。文件包含查询坐标，请勿公开分享；确认后需手动删除响应转储，清空日志不会删除它们。
 
 ## 当前限制
 
-- 未完成 iPhone12,8 / iOS 16.1.1 真机运行验证；无法保证该固件的 WeatherKit 响应格式与字段索引完全一致。
+- 已确认目标真机 App/Widget 的 Open-Meteo 响应补丁执行；逐字段数值、全部城市和 UI 验收仍未完成，FlatBuffer 路径未真机验证。
 - 只覆盖 current / hourly / daily 的数值与天气现象。天气预警、AQI、分钟级降水、Apple 归属文案、地图图层保持原生。
 - HKO / SMG / CWA / NWS / JMA / KMA 尚未接入，选择后会回退。
-- 如果 WeatherKit 使用绕过 `NSURLProtocol` 的网络栈，拦截不会生效；日志中会只出现 `NSURLSession task:` 调试记录而没有 `Weather request`。
+- 绕过 NSURLProtocol 时仅 completion handler 请求有兜底；其他网络栈或 delegate 路径可能无法覆盖。
 - 天气 App 底部的归属信息仍可能显示 Apple Weather；插件不修改原生归属 UI。
 - Open-Meteo 在中国大陆的网络可达性、QWeather 的套餐权限和商用许可需用户自行确认。
 

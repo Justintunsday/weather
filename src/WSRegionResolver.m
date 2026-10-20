@@ -28,10 +28,10 @@ static BOOL WSInBox(double lat, double lon, double minLat, double maxLat, double
                WSInBox(latitude, longitude, 51.0, 72.0, -170.0, -129.0) ||
                WSInBox(latitude, longitude, 18.5, 22.5, -161.0, -154.0)) {
         geometry = WS_REGION_US;
-    } else if (WSInBox(latitude, longitude, 24.0, 46.0, 122.0, 146.0)) {
-        geometry = WS_REGION_JP;
     } else if (WSInBox(latitude, longitude, 33.0, 39.5, 124.0, 132.0)) {
         geometry = WS_REGION_KR;
+    } else if (WSInBox(latitude, longitude, 24.0, 46.0, 122.0, 146.0)) {
+        geometry = WS_REGION_JP;
     } else if (WSInBox(latitude, longitude, 18.0, 54.0, 73.0, 135.5)) {
         geometry = WS_REGION_CN;
     }

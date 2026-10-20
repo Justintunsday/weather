@@ -21,7 +21,7 @@ static NSString *WSLogLevelName(WSLogLevel level) {
     if (!format.length) return;
     WSSettings *settings = [WSSettings shared];
     NSInteger configuredLevel = [settings logLevel];
-    if (configuredLevel <= 0) configuredLevel = 3;
+    if (configuredLevel <= 0) return;
     if (level > configuredLevel) return;
 
     va_list args;

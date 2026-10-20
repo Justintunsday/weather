@@ -61,6 +61,7 @@ static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuratio
 }
 
 + (NSURLSessionConfiguration *)backgroundSessionConfigurationWithIdentifier:(NSString *)identifier {
+    if (![[WSSettings shared] boolForKey:@"debugConvertBackgroundSessions" default:NO]) return %orig;
     [WSLogger warning:@"Converting BACKGROUND URLSession in %@ id=%@ to ephemeral", [[NSProcessInfo processInfo] processName], identifier ?: @"?"];
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     configuration.timeoutIntervalForRequest = 20.0;
@@ -137,8 +138,8 @@ static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuratio
 %ctor {
     @autoreleasepool {
         NSString *processName = [[NSProcessInfo processInfo] processName] ?: @"?";
-        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.8", getpid(), processName);
-        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.8 date=%@\n",
+        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.9", getpid(), processName);
+        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.9 date=%@\n",
                             getpid(), processName, [NSDate date]];
         NSArray<NSString *> *markerPaths = @[
             @"/var/mobile/Library/Weather/WeatherSource-ctor.txt",
