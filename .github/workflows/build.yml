@@ -16,6 +16,11 @@ jobs:
         run: |
           brew install ldid dpkg xz
 
+      - name: Test JSON response patching
+        run: |
+          xcrun clang++ -fobjc-arc -framework Foundation -Isrc tests/ResponsePatcherTests.mm src/WSWeatherResponsePatcher.mm src/WSWeatherModel.m src/WSCondition.m src/WSSettings.m -o /tmp/weather-response-tests
+          /tmp/weather-response-tests
+
       - name: Setup Theos
         run: |
           git clone --recursive --depth 1 https://github.com/theos/theos.git "$HOME/theos"

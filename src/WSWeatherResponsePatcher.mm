@@ -41,6 +41,13 @@ static BOOL WSSetJSONNumber(NSMutableDictionary *dictionary, NSString *key, NSNu
     if (!value || !dictionary || !key) return NO;
     id existing = dictionary[key];
     if (!existing) return NO;
+    // Provider models use percentages; Apple's JSON schema uses fractions.
+    // FlatBuffer has its own integer setters and must retain percentage units.
+    if ([key isEqualToString:@"humidity"] || [key isEqualToString:@"humidityMax"] ||
+        [key isEqualToString:@"humidityMin"] || [key isEqualToString:@"cloudCover"] ||
+        [key isEqualToString:@"precipitationChance"]) {
+        value = @(MAX(0.0, MIN(1.0, value.doubleValue / 100.0)));
+    }
     if ([existing isKindOfClass:[NSNumber class]] || existing == [NSNull null]) {
         dictionary[key] = value;
         return YES;
@@ -110,6 +117,7 @@ static WSHourlyWeather *WSMatchHour(NSArray<WSHourlyWeather *> *hours, double ta
             }
         }
         if (best && bestDelta <= 1800.0) return best;
+        return nil;
     }
     if (fallbackIndex < hours.count) return hours[fallbackIndex];
     return nil;
@@ -129,6 +137,7 @@ static WSDailyWeather *WSMatchDay(NSArray<WSDailyWeather *> *days, double target
             }
         }
         if (best && bestDelta <= 43200.0) return best;
+        return nil;
     }
     if (fallbackIndex < days.count) return days[fallbackIndex];
     return nil;
