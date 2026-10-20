@@ -263,7 +263,7 @@ static void WSSettingsDarwinCallback(CFNotificationCenterRef center,
 - (NSString *)overrideProviderForLatitude:(double)latitude longitude:(double)longitude {
     NSString *key = WSOverrideKey(latitude, longitude);
     NSString *value = [self stringForKey:key default:@""];
-    return value.length ? value : nil;
+    return value.length && ![value isEqualToString:WS_PROVIDER_AUTO] ? value : nil;
 }
 
 - (NSString *)qweatherKey {
