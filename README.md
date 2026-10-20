@@ -11,7 +11,7 @@
 
 - [GitHub Release v0.1.1（rootless .deb）](https://github.com/Justintunsday/weather/releases/tag/v0.1.1)
 - GitHub Actions 制品：`WeatherSource-rootless-deb`
-- 最近一次成功构建：见 GitHub Actions（v0.1.1）
+- 最近一次成功构建：run 39430834708（v0.1.1）
 
 ## 它做什么
 
