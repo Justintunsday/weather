@@ -15,7 +15,6 @@ BUNDLE_NAME = WeatherSourcePrefs
 WeatherSourcePrefs_FILES = prefs/WSRootListController.m prefs/WSLogController.m src/WSSettings.m
 WeatherSourcePrefs_INSTALL_PATH = /Library/PreferenceBundles
 WeatherSourcePrefs_FRAMEWORKS = UIKit Foundation
-WeatherSourcePrefs_PRIVATE_FRAMEWORKS = Preferences
 WeatherSourcePrefs_RESOURCE_DIRS = prefs/Resources
 WeatherSourcePrefs_CFLAGS = -fobjc-arc -Wno-nullability-completeness -Wno-error=unguarded-availability-new -I$(THEOS_PROJECT_DIR)/src -DWS_VERSION=\"0.1.11\"
 WeatherSourcePrefs_LDFLAGS = -Wl,-undefined,dynamic_lookup
