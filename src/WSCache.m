@@ -1,4 +1,4 @@
-﻿#import "WSCache.h"
+#import "WSCache.h"
 #import <float.h>
 
 @implementation WSCache

@@ -1,4 +1,4 @@
-﻿#import "WSLogger.h"
+#import "WSLogger.h"
 #import "WSSettings.h"
 
 @interface WSLogger ()

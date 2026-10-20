@@ -1,4 +1,4 @@
-﻿Package: com.weathersource.tweak
+Package: com.weathersource.tweak
 Name: WeatherSource
 Version: 0.1.0
 Architecture: iphoneos-arm64
@@ -7,4 +7,3 @@ Maintainer: WeatherSource
 Author: WeatherSource
 Section: Tweaks
 Depends: firmware (>= 16.0), ellekit
-

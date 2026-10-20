@@ -1,4 +1,4 @@
-﻿#import "WSQWeatherProvider.h"
+#import "WSQWeatherProvider.h"
 #import "WSHTTPClient.h"
 #import "WSSettings.h"
 #import "WSLogger.h"

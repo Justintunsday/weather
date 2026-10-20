@@ -1,4 +1,4 @@
-﻿#import "WSOpenMeteoProvider.h"
+#import "WSOpenMeteoProvider.h"
 #import "WSHTTPClient.h"
 #import "WSLogger.h"
 #import "WSCondition.h"

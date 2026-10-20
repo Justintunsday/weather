@@ -1,4 +1,4 @@
-﻿#import "WSWeatherResponsePatcher.h"
+#import "WSWeatherResponsePatcher.h"
 #import "WSCondition.h"
 #import "WSFlatBuffer.h"
 #import "WSSettings.h"

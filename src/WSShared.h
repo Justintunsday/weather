@@ -1,4 +1,4 @@
-﻿#import <Foundation/Foundation.h>
+#import <Foundation/Foundation.h>
 #import <math.h>
 
 #define WS_PREF_DOMAIN @"com.weathersource.tweak"

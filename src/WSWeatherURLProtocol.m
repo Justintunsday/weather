@@ -1,4 +1,4 @@
-﻿#import "WSWeatherURLProtocol.h"
+#import "WSWeatherURLProtocol.h"
 #import "WSWeatherResponsePatcher.h"
 #import "WSProviderRegistry.h"
 #import "WSFetchCoordinator.h"
