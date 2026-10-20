@@ -1,0 +1,54 @@
+name: Research iOS 16.1.1 WeatherKit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  research:
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ipsw
+        run: brew install blacktop/tap/ipsw
+
+      - name: Extract dyld shared cache from iOS 16.1.1
+        run: |
+          mkdir -p /tmp/fw
+          ipsw extract --dyld --remote "https://updates.cdn-apple.com/2022FallFCS/fullrestores/012-97023/92B670A8-AFDB-4BDF-A9F2-BEA71C4D3638/iPhone12,8_16.1.1_20B101_Restore.ipsw" -o /tmp/fw
+          find /tmp/fw -maxdepth 4 -type f -name 'dyld_shared_cache_arm64e*' | head -50
+
+      - name: Extract Weather frameworks
+        run: |
+          set -x
+          DSC="$(find /tmp/fw -type f -name 'dyld_shared_cache_arm64e' | head -1)"
+          echo "DSC=$DSC"
+          mkdir -p /tmp/out
+          for image in WeatherKit WeatherDaemon WeatherCore Weather WeatherUI WeatherFoundation; do
+            ipsw dyld extract "$DSC" "$image" -o /tmp/out || true
+          done
+          find /tmp/out -maxdepth 2 -type f -ls
+
+      - name: Dump strings and headers
+        run: |
+          mkdir -p /tmp/research
+          for f in /tmp/out/*; do
+            [ -f "$f" ] || continue
+            base="$(basename "$f")"
+            strings -a "$f" > "/tmp/research/${base}.strings.txt" || true
+            ipsw macho info "$f" > "/tmp/research/${base}.macho.txt" 2>&1 || true
+            ipsw swift-dump "$f" > "/tmp/research/${base}.swift.txt" 2>&1 || true
+            ipsw class-dump "$f" --headers -o "/tmp/research/headers-${base}" > "/tmp/research/${base}.objc.txt" 2>&1 || true
+          done
+          grep -RInE 'weatherkit\.apple\.com|weather-data\.apple\.com|flatbuffer|api/v[123]/weather|application/json|JSONDecoder' /tmp/research/*.strings.txt | head -200 || true
+          grep -RInE 'WeatherService|WDSEndpoint|WDS|WeatherData|Forecast' /tmp/research/*.swift.txt | head -200 || true
+
+      - name: Upload research output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios16.1.1-weatherkit-research
+          path: /tmp/research
+          if-no-files-found: warn
