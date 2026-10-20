@@ -225,7 +225,9 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
     WSSettings *settings = [WSSettings shared];
     if ([key isEqualToString:@"enabled"]) return @([settings enabled]);
     if ([key isEqualToString:@"autoRegion"]) return @([settings autoRegion]);
-    return [settings objectForKey:key default:[specifier propertyForKey:@"default"] ?: @""];
+    id value = [settings objectForKey:key default:[specifier propertyForKey:@"default"] ?: @""];
+    if (specifier.cellType == PSEditTextCell || specifier.cellType == PSSecureEditTextCell) return [value description];
+    return value;
 }
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
