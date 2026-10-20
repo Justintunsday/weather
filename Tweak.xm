@@ -20,7 +20,36 @@ static void WSRefreshNotificationCallback(CFNotificationCenterRef center,
     [[WSCache shared] removeAll];
 }
 
+static BOOL WSIsWeatherRequest(NSURLRequest *request) {
+    NSString *host = request.URL.host.lowercaseString;
+    if (!host.length) return NO;
+    if ([host isEqualToString:@"weather-data.apple.com"] || [host isEqualToString:@"weatherkit.apple.com"]) return YES;
+    return [host containsString:@"weather-data.apple.com"] || [host containsString:@"weatherkit.apple.com"];
+}
+
+static BOOL WSIsForwardedRequest(NSURLRequest *request) {
+    if ([NSURLProtocol propertyForKey:@"com.weathersource.forwarded" inRequest:request]) return YES;
+    return [[request valueForHTTPHeaderField:@"X-WeatherSource-Forwarded"] length] > 0;
+}
+
 %hook NSURLSessionConfiguration
+
++ (NSURLSessionConfiguration *)defaultSessionConfiguration {
+    NSURLSessionConfiguration *configuration = %orig;
+    [WSLogger info:@"URLSession default config created in %@", [[NSProcessInfo processInfo] processName]];
+    return configuration;
+}
+
++ (NSURLSessionConfiguration *)ephemeralSessionConfiguration {
+    NSURLSessionConfiguration *configuration = %orig;
+    [WSLogger info:@"URLSession ephemeral config created in %@", [[NSProcessInfo processInfo] processName]];
+    return configuration;
+}
+
++ (NSURLSessionConfiguration *)backgroundSessionConfigurationWithIdentifier:(NSString *)identifier {
+    [WSLogger warning:@"URLSession BACKGROUND config in %@ id=%@", [[NSProcessInfo processInfo] processName], identifier ?: @"?"];
+    return %orig;
+}
 
 - (NSArray *)protocolClasses {
     NSArray *classes = %orig;
@@ -38,11 +67,17 @@ static void WSRefreshNotificationCallback(CFNotificationCenterRef center,
 
 - (NSURLSessionDataTask *)dataTaskWithRequest:(NSURLRequest *)request
                             completionHandler:(void (^)(NSData *, NSURLResponse *, NSError *))completionHandler {
-    if ([[WSSettings shared] logLevel] >= 3 && request.URL.host.length) {
-        NSString *host = request.URL.host.lowercaseString;
-        if ([host containsString:@"weather"]) {
-            [WSLogger debug:@"NSURLSession task: %@ %@", request.HTTPMethod, request.URL.path];
-        }
+    if (WSIsWeatherRequest(request) && !WSIsForwardedRequest(request)) {
+        [WSLogger info:@"NSURLSession completion task in %@: %@ %@",
+                      [[NSProcessInfo processInfo] processName], request.HTTPMethod, request.URL.path];
+    }
+    return %orig;
+}
+
+- (NSURLSessionDataTask *)dataTaskWithRequest:(NSURLRequest *)request {
+    if (WSIsWeatherRequest(request) && !WSIsForwardedRequest(request)) {
+        [WSLogger info:@"NSURLSession delegate task in %@: %@ %@",
+                      [[NSProcessInfo processInfo] processName], request.HTTPMethod, request.URL.path];
     }
     return %orig;
 }

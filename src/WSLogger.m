@@ -75,37 +75,54 @@ static NSString *WSLogLevelName(WSLogLevel level) {
 }
 
 + (NSString *)logFilePath {
-    return @"/tmp/WeatherSource.log";
+    return [self logFilePaths].firstObject ?: @"/tmp/WeatherSource.log";
+}
+
++ (NSArray<NSString *> *)logFilePaths {
+    NSMutableArray<NSString *> *paths = [NSMutableArray array];
+    [paths addObject:@"/tmp/WeatherSource.log"];
+    [paths addObject:@"/var/mobile/Library/Weather/WeatherSource.log"];
+    NSString *temporary = [NSTemporaryDirectory() stringByAppendingPathComponent:@"WeatherSource.log"];
+    if (temporary.length) [paths addObject:temporary];
+    NSString *home = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Caches/WeatherSource.log"];
+    if (home.length) [paths addObject:home];
+    return paths;
 }
 
 + (void)appendLineToFile:(NSString *)line {
-    NSString *path = [self logFilePath];
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if (![fm fileExistsAtPath:path]) {
-        [fm createFileAtPath:path contents:[NSData data] attributes:nil];
-    }
-    NSDictionary *attrs = [fm attributesOfItemAtPath:path error:nil];
-    if ([attrs[NSFileSize] unsignedLongLongValue] > 512 * 1024) {
-        [fm removeItemAtPath:path error:nil];
-        [fm createFileAtPath:path contents:[NSData data] attributes:nil];
-    }
-    NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:path];
-    if (!handle) return;
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
     formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
     NSString *stamped = [NSString stringWithFormat:@"%@ %@\n", [formatter stringFromDate:[NSDate date]], line];
-    @try {
-        [handle seekToEndOfFile];
-        [handle writeData:[stamped dataUsingEncoding:NSUTF8StringEncoding]];
-        [handle closeFile];
-    } @catch (__unused NSException *exception) {
-        [handle closeFile];
+    NSData *data = [stamped dataUsingEncoding:NSUTF8StringEncoding];
+    for (NSString *path in [self logFilePaths]) {
+        NSFileManager *fm = [NSFileManager defaultManager];
+        NSString *directory = [path stringByDeletingLastPathComponent];
+        [fm createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:nil];
+        if (![fm fileExistsAtPath:path]) {
+            [fm createFileAtPath:path contents:[NSData data] attributes:nil];
+        }
+        NSDictionary *attrs = [fm attributesOfItemAtPath:path error:nil];
+        if ([attrs[NSFileSize] unsignedLongLongValue] > 512 * 1024) {
+            [fm removeItemAtPath:path error:nil];
+            [fm createFileAtPath:path contents:[NSData data] attributes:nil];
+        }
+        NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:path];
+        if (!handle) continue;
+        @try {
+            [handle seekToEndOfFile];
+            [handle writeData:data];
+            [handle closeFile];
+        } @catch (__unused NSException *exception) {
+            [handle closeFile];
+        }
     }
 }
 
 + (void)clearFileLog {
-    [[NSFileManager defaultManager] removeItemAtPath:[self logFilePath] error:nil];
+    for (NSString *path in [self logFilePaths]) {
+        [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+    }
 }
 
 @end
