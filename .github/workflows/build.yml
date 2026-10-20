@@ -19,7 +19,11 @@ jobs:
       - name: Setup Theos
         run: |
           git clone --recursive --depth 1 https://github.com/theos/theos.git "$HOME/theos"
+          mkdir -p "$HOME/theos/sdks"
+          SDK_PATH="$(xcrun --sdk iphoneos --show-sdk-path)"
+          ln -sfn "$SDK_PATH" "$HOME/theos/sdks/$(basename "$SDK_PATH")"
           echo "THEOS=$HOME/theos" >> "$GITHUB_ENV"
+          echo "Using SDK: $SDK_PATH"
 
       - name: Build package
         run: make package FINALPACKAGE=1

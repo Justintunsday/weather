@@ -430,7 +430,8 @@ static BOOL WSDetectRootTables(WSFlatBuffer root, int *currentIndex, int *dailyI
         if (!table.valid()) continue;
 
         if (*currentIndex < 0 &&
-            table.fieldExists(31) && table.fieldExists(32) &&\r\n            (table.fieldExists(39) || table.fieldExists(23) || table.fieldExists(8))) {
+            table.fieldExists(31) && table.fieldExists(32) &&
+            (table.fieldExists(39) || table.fieldExists(23) || table.fieldExists(8))) {
             *currentIndex = i;
             continue;
         }
