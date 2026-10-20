@@ -47,8 +47,13 @@ static BOOL WSIsForwardedRequest(NSURLRequest *request) {
 }
 
 + (NSURLSessionConfiguration *)backgroundSessionConfigurationWithIdentifier:(NSString *)identifier {
-    [WSLogger warning:@"URLSession BACKGROUND config in %@ id=%@", [[NSProcessInfo processInfo] processName], identifier ?: @"?"];
-    return %orig;
+    [WSLogger warning:@"Converting BACKGROUND URLSession in %@ id=%@ to ephemeral", [[NSProcessInfo processInfo] processName], identifier ?: @"?"];
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    configuration.timeoutIntervalForRequest = 20.0;
+    configuration.timeoutIntervalForResource = 60.0;
+    configuration.HTTPShouldSetCookies = NO;
+    configuration.HTTPCookieStorage = nil;
+    return configuration;
 }
 
 - (NSArray *)protocolClasses {
@@ -86,6 +91,17 @@ static BOOL WSIsForwardedRequest(NSURLRequest *request) {
 
 %ctor {
     @autoreleasepool {
+        NSString *processName = [[NSProcessInfo processInfo] processName] ?: @"?";
+        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.4", getpid(), processName);
+        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.4 date=%@\n",
+                            getpid(), processName, [NSDate date]];
+        NSArray<NSString *> *markerPaths = @[
+            @"/var/mobile/Library/Weather/WeatherSource-ctor.txt",
+            [NSTemporaryDirectory() stringByAppendingPathComponent:@"WeatherSource-ctor.txt"] ?: @"/tmp/WeatherSource-ctor.txt"
+        ];
+        for (NSString *path in markerPaths) {
+            [marker writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+        }
         [NSURLProtocol registerClass:[WSWeatherURLProtocol class]];
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                         NULL,
