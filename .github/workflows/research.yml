@@ -12,7 +12,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install ipsw
-        run: brew install blacktop/tap/ipsw
+        run: |
+          brew trust blacktop/tap
+          brew install --formula blacktop/tap/ipsw
 
       - name: Extract dyld shared cache from iOS 16.1.1
         run: |
