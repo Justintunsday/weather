@@ -2,6 +2,7 @@
 #import "WSLogController.h"
 #import "WSSettings.h"
 #import "WSShared.h"
+#import <CoreFoundation/CoreFoundation.h>
 
 static NSArray<NSString *> *WSProviderValues(void) {
     return @[WS_PROVIDER_AUTO, WS_PROVIDER_APPLE, WS_PROVIDER_OPEN_METEO, WS_PROVIDER_QWEATHER,
@@ -139,6 +140,16 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
     [fallback setProperty:WS_PROVIDER_OPEN_METEO forKey:@"default"];
     [specifiers addObject:fallback];
 
+    PSSpecifier *refresh = [PSSpecifier preferenceSpecifierNamed:@"清除缓存并立即生效"
+                                                          target:self
+                                                             set:nil
+                                                             get:nil
+                                                          detail:nil
+                                                            cell:@"PSButtonCell"
+                                                            edit:nil];
+    [refresh setProperty:NSStringFromSelector(@selector(refreshTweak)) forKey:@"action"];
+    [specifiers addObject:refresh];
+
     PSSpecifier *keys = [PSSpecifier groupSpecifierWithName:@"API Key"];
     [keys setProperty:@"Key 保存在越狱偏好设置 plist 中，未硬编码进源码；请勿在共享设备上使用付费 Key。日志不会记录完整 Key。"
              forKey:@"footerText"];
@@ -196,6 +207,18 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
     if ([key isEqualToString:@"enabled"] || [key isEqualToString:@"autoRegion"]) {
         [self reloadSpecifiers];
     }
+}
+
+- (void)refreshTweak {
+    [[WSSettings shared] invalidateCache];
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(),
+                                         CFSTR(WS_NOTIFY_REFRESH_REQUESTED),
+                                         NULL, NULL, true);
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"已发送刷新通知"
+                                                                   message:@"请回到天气 App 下拉刷新或重新打开。"
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"好" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)addLocation {
