@@ -37,9 +37,8 @@ static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuratio
     NSMutableArray *classes = [[configuration protocolClasses] mutableCopy];
     if (!classes) classes = [NSMutableArray array];
     Class protocolClass = [WSWeatherURLProtocol class];
-    if (![classes containsObject:protocolClass]) {
-        [classes addObject:protocolClass];
-    }
+    [classes removeObject:protocolClass];
+    [classes insertObject:protocolClass atIndex:0];
     // The getter hook can synthesize the class without updating the backing config.
     // Always persist the returned list before NSURLSession copies its internals.
     configuration.protocolClasses = classes;
@@ -75,10 +74,10 @@ static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuratio
     NSArray *classes = %orig;
     if (!classes) classes = @[];
     Class protocolClass = [WSWeatherURLProtocol class];
-    if (![classes containsObject:protocolClass]) {
-        return [classes arrayByAddingObject:protocolClass];
-    }
-    return classes;
+    NSMutableArray *ordered = [classes mutableCopy];
+    [ordered removeObject:protocolClass];
+    [ordered insertObject:protocolClass atIndex:0];
+    return ordered;
 }
 
 %end
@@ -109,6 +108,18 @@ static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuratio
     if (WSIsWeatherRequest(request) && !WSIsForwardedRequest(request)) {
         [WSLogger info:@"NSURLSession completion task in %@: %@ host=%@ path=%@",
                       [[NSProcessInfo processInfo] processName], request.HTTPMethod, request.URL.host, request.URL.path];
+        if (completionHandler) {
+            void (^originalCompletion)(NSData *, NSURLResponse *, NSError *) = [completionHandler copy];
+            return %orig(request, ^(NSData *data, NSURLResponse *response, NSError *error) {
+                if (error || ![response isKindOfClass:[NSHTTPURLResponse class]]) {
+                    originalCompletion(data, response, error);
+                    return;
+                }
+                [WSWeatherURLProtocol patchResponseData:data response:(NSHTTPURLResponse *)response request:request completion:^(NSData *patched, NSURLResponse *updated) {
+                    originalCompletion(patched, updated, nil);
+                }];
+            });
+        }
     }
     return %orig;
 }
@@ -126,8 +137,8 @@ static void WSAddProtocolToConfiguration(NSURLSessionConfiguration *configuratio
 %ctor {
     @autoreleasepool {
         NSString *processName = [[NSProcessInfo processInfo] processName] ?: @"?";
-        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.6", getpid(), processName);
-        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.6 date=%@\n",
+        NSLog(@"[WeatherSource] CTOR pid=%d process=%@ version=0.1.7", getpid(), processName);
+        NSString *marker = [NSString stringWithFormat:@"pid=%d process=%@ version=0.1.7 date=%@\n",
                             getpid(), processName, [NSDate date]];
         NSArray<NSString *> *markerPaths = @[
             @"/var/mobile/Library/Weather/WeatherSource-ctor.txt",

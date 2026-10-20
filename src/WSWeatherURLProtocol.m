@@ -112,6 +112,61 @@ static NSDictionary *WSParseWeatherURL(NSURL *url) {
 
 @implementation WSWeatherURLProtocol
 
++ (void)patchResponseData:(NSData *)data
+                 response:(NSHTTPURLResponse *)response
+                  request:(NSURLRequest *)request
+               completion:(void (^)(NSData *, NSURLResponse *))completion {
+    NSDictionary *info = WSParseWeatherURL(request.URL);
+    if (!info || !data.length || response.statusCode < 200 || response.statusCode >= 300 ||
+        [response valueForHTTPHeaderField:@"X-WeatherSource-Provider"].length || ![WSSettings shared].enabled) {
+        completion(data, response);
+        return;
+    }
+    double latitude = [info[@"latitude"] doubleValue];
+    double longitude = [info[@"longitude"] doubleValue];
+    NSDictionary *resolution = [WSProviderRegistry resolutionForLatitude:latitude longitude:longitude countryFromURL:info[@"country"]];
+    NSString *provider = resolution[@"provider"];
+    if ([provider isEqualToString:WS_PROVIDER_APPLE]) {
+        completion(data, response);
+        return;
+    }
+    [WSLogger info:@"Completion fallback %@ region=%@ provider=%@ bytes=%lu type=%@",
+                  request.URL.path, resolution[@"region"], provider, (unsigned long)data.length, response.MIMEType];
+    NSObject *guard = [NSObject new];
+    __block BOOL delivered = NO;
+    dispatch_queue_t queue = dispatch_get_global_queue(QOS_CLASS_UTILITY, 0);
+    void (^finish)(WSWeatherSnapshot *) = ^(WSWeatherSnapshot *snapshot) {
+        @synchronized (guard) {
+            if (delivered) return;
+            delivered = YES;
+        }
+        dispatch_async(queue, ^{
+            NSInteger changed = 0;
+            NSError *error = nil;
+            NSData *patched = snapshot.hasAnyData ? [WSWeatherResponsePatcher patchData:data contentType:response.MIMEType snapshot:snapshot changedFields:&changed error:&error] : nil;
+            if (patched && changed > 0 && [WSSettings shared].enabled) {
+                NSMutableDictionary *headers = [response.allHeaderFields mutableCopy];
+                for (NSString *key in [headers.allKeys copy]) {
+                    NSString *lower = key.lowercaseString;
+                    if ([lower isEqualToString:@"content-length"] || [lower isEqualToString:@"content-encoding"] || [lower isEqualToString:@"transfer-encoding"]) [headers removeObjectForKey:key];
+                }
+                headers[@"Content-Length"] = @(patched.length).stringValue;
+                headers[@"X-WeatherSource-Provider"] = provider;
+                NSHTTPURLResponse *updated = [[NSHTTPURLResponse alloc] initWithURL:response.URL statusCode:response.statusCode HTTPVersion:@"HTTP/1.1" headerFields:headers];
+                [WSLogger info:@"Patched completion %@: %ld fields via %@", request.URL.path, (long)changed, provider];
+                completion(patched, updated);
+            } else {
+                [WSLogger warning:@"Completion fallback unchanged %@: %@", request.URL.path, error.localizedDescription ?: (snapshot ? @"no matching fields" : @"provider unavailable or deadline")];
+                completion(data, response);
+            }
+        });
+    };
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), queue, ^{ finish(nil); });
+    [[WSFetchCoordinator shared] fetchSnapshotForProviderID:provider latitude:latitude longitude:longitude locale:info[@"locale"] completion:^(WSWeatherSnapshot *snapshot, NSError *error) {
+        finish(snapshot);
+    }];
+}
+
 + (BOOL)canInitWithRequest:(NSURLRequest *)request {
     if (!request || !request.URL) return NO;
     if ([NSURLProtocol propertyForKey:WSForwardedPropertyKey inRequest:request]) return NO;
