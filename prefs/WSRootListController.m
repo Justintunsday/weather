@@ -19,11 +19,12 @@ static NSArray<NSString *> *WSProviderTitles(void) {
 static PSSpecifier *WSProviderSpecifier(NSString *name, NSString *key, id target) {
     PSSpecifier *specifier = [PSSpecifier preferenceSpecifierNamed:name
                                                              target:target
-                                                                set:@selector(setPreferenceValue:specifier:)
-                                                                get:@selector(readPreferenceValue:)
-                                                             detail:[PSListItemsController class]
-                                                               cell:PSLinkListCell
+                                                                set:nil
+                                                                get:nil
+                                                             detail:nil
+                                                               cell:PSButtonCell
                                                                edit:nil];
+    specifier.buttonAction = @selector(chooseProvider:);
     [specifier setProperty:key forKey:@"key"];
     [specifier setProperty:WS_PREF_DOMAIN forKey:@"defaults"];
     [specifier setProperty:WSProviderValues() forKey:@"values"];
@@ -216,6 +217,13 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
              forKey:@"footerText"];
     [specifiers addObject:about];
 
+    for (PSSpecifier *item in specifiers) {
+        NSArray *values = [item propertyForKey:@"values"];
+        if (!values.count || [item.name containsString:@"·"]) continue;
+        id selected = [self readPreferenceValue:item];
+        NSString *title = item.titleDictionary[selected];
+        if (title.length) item.name = [NSString stringWithFormat:@"%@ · %@", item.name, title];
+    }
     _specifiers = specifiers;
     return _specifiers;
 }
@@ -268,6 +276,27 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"配置未保存" message:message preferredStyle:UIAlertControllerStyleAlert];
     [alert addAction:[UIAlertAction actionWithTitle:@"好" style:UIAlertActionStyleDefault handler:nil]];
     [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)chooseProvider:(PSSpecifier *)specifier {
+    NSArray *values = [specifier propertyForKey:@"values"];
+    NSArray *titles = [specifier propertyForKey:@"titles"];
+    if (!values.count || values.count != titles.count) return;
+    id selected = [self readPreferenceValue:specifier];
+    UIAlertController *picker = [UIAlertController alertControllerWithTitle:specifier.name message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    __weak typeof(self) weakSelf = self;
+    for (NSUInteger index = 0; index < values.count; index++) {
+        id value = values[index];
+        NSString *title = [value isEqual:selected] ? [titles[index] stringByAppendingString:@" ✓"] : titles[index];
+        [picker addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [weakSelf setPreferenceValue:value specifier:specifier];
+            [weakSelf reloadSpecifiers];
+        }]];
+    }
+    [picker addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
+    picker.popoverPresentationController.sourceView = self.view;
+    picker.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMidX(self.view.bounds), CGRectGetMidY(self.view.bounds), 1, 1);
+    [self presentViewController:picker animated:YES completion:nil];
 }
 
 - (void)refreshTweak {
