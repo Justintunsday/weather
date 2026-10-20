@@ -1,5 +1,14 @@
 # 真机验证：2026-10-20
 
+## Settings 配置后续更新
+
+- v0.1.14，代码 `7ce8c8a`，[成功构建及回归检查 39444363489](https://github.com/Justintunsday/weather/actions/runs/39444363489)，已安装到设备。
+- 原入口缺少 `isController`。补齐后，用户已确认“天气数据源 · WeatherSource”入口出现、主页面能打开。
+- 已修复单元格类型 ABI、设置控件读写绑定和按钮 action，增加全局数据源、日志级别、数值校验、Key 遮挡及 Host 校验。
+- 用户确认 v0.1.11 直接写 Weather 共享目录保存失败。v0.1.13 起改用设备已安装的 Cephei 2.0 偏好服务，优先读取 `com.weathersource.shared`，旧文件回退。保存后会读回核对。
+- v0.1.11 崩溃记录定位到 `PSListItemsController prepareSpecifiersMetadata`；v0.1.14 改为原生选项弹窗。
+- **尚待确认**：用户从后台关闭 Settings 后重新打开最新版，保存缓存时间 601 并重进仍保留，以及数据源弹窗可用。目前不能声称保存链路已在 Settings 完整验证。
+
 环境：iPhone SE 2（iPhone12,8），iOS 16.1.1，Dopamine rootless，ElleKit。
 
 ## 版本与构建

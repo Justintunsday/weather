@@ -49,7 +49,7 @@
 
 ## 设置
 
-v0.1.11 修复设置页单元格 ABI、列表与文本控件的共享配置读写。升级后请退出并重新打开“设置”，进入“天气数据源”；修改数值或 Key 后轻点其他行结束输入并保存，保存失败会弹出提示。关闭自动地区后可选择全局数据源；城市选择“自动”会继承地区或全局设置。
+v0.1.14 的入口为“设置 → 天气数据源 · WeatherSource”。升级后请从后台关闭并重新打开“设置”；修改数值或 Key 后轻点其他行结束输入并保存，保存失败会弹出提示。关闭自动地区后可选择全局数据源；城市选择“自动”会继承地区或全局设置。数据源和日志级别使用原生选择弹窗。
 
 - 启用 / 禁用插件
 - 自动地区识别
@@ -61,7 +61,7 @@ v0.1.11 修复设置页单元格 ABI、列表与文本控件的共享配置读�
 - 日志级别（关闭、错误与警告、普通、调试）与共享日志查看
 - 查看 / 清空 API 与异常日志
 
-v0.1.8 起，用户设置优先读取共享文件 `/var/mobile/Library/Weather/WeatherSource-config.plist`，写入使用文件锁和原子替换，文件权限为 `0600`。文件不可读时保留旧 CFPreferences 回退。已确认 Weather App/Widget 可写入位置记录；Settings 设置页的 Key 写入及跨进程生效仍需操作验证。Key 没有硬编码进源码，此文件也不是 Keychain。
+v0.1.13 起，用户配置通过 Cephei 的 `HBPreferences` 保存到 `com.weathersource.shared` 偏好域，以支持 Settings 和天气进程跨沙箱共享；依赖 Cephei 2.0 与 PreferenceLoader。旧 `/var/mobile/Library/Weather/WeatherSource-config.plist` 和 CFPreferences 保留为读取回退。v0.1.11 的 Settings 直接写 Weather 目录已被真机证明失败，已改为服务保存。入口可打开已确认，最新版保存持久化和选择弹窗仍待用户核验。Key 没有硬编码进源码，偏好文件不是 Keychain。
 
 ## 构建
 
