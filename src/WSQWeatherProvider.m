@@ -54,7 +54,7 @@ static NSNumber *QDateFromDayString(NSString *string) {
 @implementation WSQWeatherProvider
 
 - (NSString *)identifier { return @"qweather"; }
-- (NSString *)displayName { return @"鍜岄澶╂皵 QWeather"; }
+- (NSString *)displayName { return @"QWeather"; }
 - (BOOL)isAvailable { return [WSSettings shared].qweatherKey.length > 0; }
 
 - (NSURL *)URLForPath:(NSString *)path latitude:(double)latitude longitude:(double)longitude locale:(NSString *)locale {
@@ -81,7 +81,7 @@ static NSNumber *QDateFromDayString(NSString *string) {
                       completion:(WSProviderCompletion)completion {
     WSSettings *settings = [WSSettings shared];
     if (!settings.qweatherKey.length) {
-        completion(nil, WSProviderError(-10, @"鏈厤缃拰椋庡ぉ姘?API Key"));
+        completion(nil, WSProviderError(-10, @"QWeather API key is not configured"));
         return;
     }
 
@@ -89,7 +89,7 @@ static NSNumber *QDateFromDayString(NSString *string) {
     NSURL *hourlyURL = [self URLForPath:@"v7/weather/24h" latitude:latitude longitude:longitude locale:locale];
     NSURL *dailyURL = [self URLForPath:@"v7/weather/10d" latitude:latitude longitude:longitude locale:locale];
     if (!nowURL || !hourlyURL || !dailyURL) {
-        completion(nil, WSProviderError(-11, @"鏃犳硶鏋勯€犲拰椋庡ぉ姘旇姹?));
+        completion(nil, WSProviderError(-11, @"Unable to build QWeather request"));
         return;
     }
 
@@ -107,7 +107,7 @@ static NSNumber *QDateFromDayString(NSString *string) {
         if (snapshot.hasAnyData) {
             completion(snapshot, nil);
         } else {
-            NSError *error = nowError ?: hourlyError ?: dailyError ?: WSProviderError(-12, @"鍜岄澶╂皵鏈繑鍥炲彲鐢ㄦ暟鎹?);
+            NSError *error = nowError ?: hourlyError ?: dailyError ?: WSProviderError(-12, @"QWeather returned no usable data");
             completion(nil, error);
         }
     };
@@ -119,10 +119,10 @@ static NSNumber *QDateFromDayString(NSString *string) {
             NSDictionary *dictionary = [json isKindOfClass:[NSDictionary class]] ? json : nil;
             NSString *code = dictionary[@"code"] ? [dictionary[@"code"] description] : nil;
             if (!error && dictionary && code && ![code isEqualToString:@"200"]) {
-                error = WSProviderError(code.integerValue, [NSString stringWithFormat:@"鍜岄澶╂皵 %@ 杩斿洖 code=%@", label, code]);
+                error = WSProviderError(code.integerValue, [NSString stringWithFormat:@"QWeather %@ returned code=%@", label, code]);
             }
             if (!error && !dictionary) {
-                error = WSProviderError(-13, [NSString stringWithFormat:@"鍜岄澶╂皵 %@ 杩斿洖鏍煎紡閿欒", label]);
+                error = WSProviderError(-13, [NSString stringWithFormat:@"QWeather %@ response format is invalid", label]);
             }
             done(dictionary, error);
         }];

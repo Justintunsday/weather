@@ -249,7 +249,7 @@ static NSData *WSPatchJSON(NSData *data, WSWeatherSnapshot *snapshot, NSInteger 
     NSError *jsonError = nil;
     id rootObject = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&jsonError];
     if (!rootObject || ![rootObject isKindOfClass:[NSMutableDictionary class]]) {
-        if (error) *error = jsonError ?: [NSError errorWithDomain:@"com.weathersource.patch" code:-1 userInfo:@{NSLocalizedDescriptionKey: @"WeatherKit JSON 鏍瑰璞℃棤鏁?}];
+        if (error) *error = jsonError ?: [NSError errorWithDomain:@"com.weathersource.patch" code:-1 userInfo:@{NSLocalizedDescriptionKey: @"WeatherKit JSON root object is invalid"}];
         return nil;
     }
     NSMutableDictionary *root = rootObject;
@@ -454,13 +454,13 @@ static NSData *WSPatchFlatBuffer(NSData *data, WSWeatherSnapshot *snapshot, NSIn
     bool sizePrefixed = false;
     WSFlatBuffer root = WSFlatBuffer::root(bytes, mutableData.length, &sizePrefixed);
     if (!root.valid()) {
-        if (error) *error = [NSError errorWithDomain:@"com.weathersource.patch" code:-2 userInfo:@{NSLocalizedDescriptionKey: @"WeatherKit FlatBuffer 鏍硅〃鏃犳晥"}];
+        if (error) *error = [NSError errorWithDomain:@"com.weathersource.patch" code:-2 userInfo:@{NSLocalizedDescriptionKey: @"WeatherKit FlatBuffer root table is invalid"}];
         return nil;
     }
 
     int currentIndex = -1, dailyIndex = -1, hourlyIndex = -1;
     if (!WSDetectRootTables(root, &currentIndex, &dailyIndex, &hourlyIndex)) {
-        if (error) *error = [NSError errorWithDomain:@"com.weathersource.patch" code:-3 userInfo:@{NSLocalizedDescriptionKey: @"鏈瘑鍒?WeatherKit FlatBuffer 鏁版嵁缁撴瀯"}];
+        if (error) *error = [NSError errorWithDomain:@"com.weathersource.patch" code:-3 userInfo:@{NSLocalizedDescriptionKey: @"WeatherKit FlatBuffer layout was not recognized"}];
         return nil;
     }
 

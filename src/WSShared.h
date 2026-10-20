@@ -33,16 +33,16 @@
 #define WS_MAX_RECENT_LOCATIONS 24
 
 static inline NSString *WSProviderDisplayName(NSString *provider) {
-    if ([provider isEqualToString:WS_PROVIDER_APPLE]) return @"Apple Weather锛堝師鐢燂級";
+    if ([provider isEqualToString:WS_PROVIDER_APPLE]) return @"Apple Weather（原生）";
     if ([provider isEqualToString:WS_PROVIDER_OPEN_METEO]) return @"Open-Meteo";
-    if ([provider isEqualToString:WS_PROVIDER_QWEATHER]) return @"鍜岄澶╂皵 QWeather";
-    if ([provider isEqualToString:WS_PROVIDER_HKO]) return @"棣欐腐澶╂枃鍙?HKO";
-    if ([provider isEqualToString:WS_PROVIDER_SMG]) return @"婢抽棬鍦扮悆鐗╃悊姘旇薄灞€ SMG";
-    if ([provider isEqualToString:WS_PROVIDER_CWA]) return @"鍙版咕涓ぎ姘旇薄缃?CWA";
-    if ([provider isEqualToString:WS_PROVIDER_NWS]) return @"缇庡浗 NOAA / NWS";
-    if ([provider isEqualToString:WS_PROVIDER_JMA]) return @"鏃ユ湰姘旇薄鍘?JMA";
-    if ([provider isEqualToString:WS_PROVIDER_KMA]) return @"闊╁浗姘旇薄鍘?KMA";
-    return @"鑷姩";
+    if ([provider isEqualToString:WS_PROVIDER_QWEATHER]) return @"和风天气 QWeather";
+    if ([provider isEqualToString:WS_PROVIDER_HKO]) return @"香港天文台 HKO";
+    if ([provider isEqualToString:WS_PROVIDER_SMG]) return @"澳门地球物理气象局 SMG";
+    if ([provider isEqualToString:WS_PROVIDER_CWA]) return @"台湾中央气象署 CWA";
+    if ([provider isEqualToString:WS_PROVIDER_NWS]) return @"美国 NOAA / NWS";
+    if ([provider isEqualToString:WS_PROVIDER_JMA]) return @"日本气象厅 JMA";
+    if ([provider isEqualToString:WS_PROVIDER_KMA]) return @"韩国气象厅 KMA";
+    return @"自动";
 }
 
 static inline NSString *WSProviderShortName(NSString *provider) {
@@ -59,14 +59,14 @@ static inline NSString *WSProviderShortName(NSString *provider) {
 }
 
 static inline NSString *WSRegionDisplayName(NSString *region) {
-    if ([region isEqualToString:WS_REGION_CN]) return @"涓浗澶ч檰";
-    if ([region isEqualToString:WS_REGION_HK]) return @"棣欐腐";
-    if ([region isEqualToString:WS_REGION_MO]) return @"婢抽棬";
-    if ([region isEqualToString:WS_REGION_TW]) return @"鍙版咕";
-    if ([region isEqualToString:WS_REGION_US]) return @"缇庡浗";
-    if ([region isEqualToString:WS_REGION_JP]) return @"鏃ユ湰";
-    if ([region isEqualToString:WS_REGION_KR]) return @"闊╁浗";
-    return @"鍏朵粬鍦板尯";
+    if ([region isEqualToString:WS_REGION_CN]) return @"中国大陆";
+    if ([region isEqualToString:WS_REGION_HK]) return @"香港";
+    if ([region isEqualToString:WS_REGION_MO]) return @"澳门";
+    if ([region isEqualToString:WS_REGION_TW]) return @"台湾";
+    if ([region isEqualToString:WS_REGION_US]) return @"美国";
+    if ([region isEqualToString:WS_REGION_JP]) return @"日本";
+    if ([region isEqualToString:WS_REGION_KR]) return @"韩国";
+    return @"其他地区";
 }
 
 static inline NSString *WSOverrideKey(double latitude, double longitude) {
@@ -80,4 +80,3 @@ static inline NSString *WSOverrideKey(double latitude, double longitude) {
 static inline NSString *WSRegionProviderKey(NSString *region) {
     return [NSString stringWithFormat:@"region_%@", region];
 }
-

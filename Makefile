@@ -1,4 +1,4 @@
-﻿TARGET := iphone:clang:17.5:15.0
+﻿TARGET := iphone:clang:latest:15.0
 ARCHS := arm64 arm64e
 THEOS_PACKAGE_SCHEME = rootless
 
@@ -24,6 +24,7 @@ include $(THEOS_MAKE_PATH)/bundle.mk
 
 after-install::
 	install.exec "killall -9 Weather 2>/dev/null || true; killall -9 WeatherWidget 2>/dev/null || true"
+
 
 
 

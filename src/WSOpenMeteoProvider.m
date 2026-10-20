@@ -99,7 +99,7 @@ static NSNumber *WSSnowfallMillimeters(NSNumber *centimeters) {
     (void)locale;
     NSURL *url = [self URLForLatitude:latitude longitude:longitude];
     if (!url) {
-        completion(nil, WSProviderError(-1, @"鏃犳硶鏋勯€?Open-Meteo URL"));
+        completion(nil, WSProviderError(-1, @"Unable to build Open-Meteo URL"));
         return;
     }
     [WSLogger debug:@"Open-Meteo request lat=%.4f lon=%.4f", latitude, longitude];
@@ -110,18 +110,18 @@ static NSNumber *WSSnowfallMillimeters(NSNumber *centimeters) {
             return;
         }
         if (![json isKindOfClass:[NSDictionary class]]) {
-            completion(nil, WSProviderError(-2, @"Open-Meteo 杩斿洖浜嗛潪 JSON 瀵硅薄"));
+            completion(nil, WSProviderError(-2, @"Open-Meteo returned a non-JSON object"));
             return;
         }
         NSDictionary *root = (NSDictionary *)json;
         if (root[@"error"]) {
-            NSString *reason = root[@"reason"] ?: @"Open-Meteo 杩斿洖閿欒";
+            NSString *reason = root[@"reason"] ?: @"Open-Meteo returned an error";
             completion(nil, WSProviderError(-3, reason));
             return;
         }
         WSWeatherSnapshot *snapshot = [self snapshotFromJSON:root];
         if (!snapshot.hasAnyData) {
-            completion(nil, WSProviderError(-4, @"Open-Meteo 鏈繑鍥炲彲鐢ㄥぉ姘旀暟鎹?));
+            completion(nil, WSProviderError(-4, @"Open-Meteo returned no usable weather data"));
             return;
         }
         completion(snapshot, nil);
