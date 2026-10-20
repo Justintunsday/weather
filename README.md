@@ -1,4 +1,4 @@
-# WeatherSource
+﻿# WeatherSource
 
 按天气 App 当前查询地点，自动选择天气数据源的 iOS 16 Rootless 越狱插件。
 
@@ -6,6 +6,12 @@
 
 > **状态：MVP / 运行时尚未在目标设备完成验证。**
 > 目标设备 iPhone SE 2（iPhone12,8）iOS 16.1.1 在开发过程中重启并失去越狱 SSH，因此本仓库暂未完成真机运行测试。源码、构建脚本和 FlatBuffer/JSON 适配层已实现；请以 GitHub Actions 的编译结果和实际安装日志为准。插件在识别失败、schema 不匹配、请求超时或数据源不可用时始终回退到 Apple 原生数据，不会伪造字段。
+
+## 下载
+
+- [GitHub Release v0.1.0（rootless .deb）](https://github.com/Justintunsday/weather/releases/tag/v0.1.0)
+- GitHub Actions 制品：`WeatherSource-rootless-deb`
+- 最近一次成功构建：run `39429547604`
 
 ## 它做什么
 
@@ -100,3 +106,4 @@ make package FINALPACKAGE=1
 ## License
 
 MIT。第三方数据、接口与商标归各自权利人所有。
+
