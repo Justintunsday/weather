@@ -1,8 +1,9 @@
-{
-    entry = {
-        bundle = "WeatherSourcePrefs";
-        cell = "PSLinkCell";
-        detail = "WSRootListController";
-        label = "天气数据源";
-    };
-}
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict><key>entry</key><dict>
+<key>bundle</key><string>WeatherSourcePrefs</string>
+<key>cell</key><string>PSLinkCell</string>
+<key>detail</key><string>WSRootListController</string>
+<key>isController</key><true/>
+<key>label</key><string>天气数据源 · WeatherSource</string>
+</dict></dict></plist>
