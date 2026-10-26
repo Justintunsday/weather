@@ -5,6 +5,7 @@
 #import "WSSettings.h"
 #import "WSShared.h"
 #import <stdlib.h>
+#import <string.h>
 
 static void Fail(NSString *message) {
     fprintf(stderr, "%s\n", message.UTF8String);
@@ -17,8 +18,48 @@ static void WriteJSON(id object, NSString *path) {
     if (!data || ![data writeToFile:path options:NSDataWritingAtomic error:&error]) Fail(error.localizedDescription ?: @"Cannot write result");
 }
 
+static NSArray<NSString *> *TestSettingKeys(void) {
+    return @[@"enabled", @"autoRegion", @"logLevel", WSRegionProviderKey(WS_REGION_HK), WSOverrideKey(22.485, 114.141)];
+}
+
+static void RestoreSettings(NSDictionary *backup) {
+    WSSettings *settings = [WSSettings shared];
+    for (NSString *key in TestSettingKeys()) {
+        NSDictionary *entry = backup[key];
+        if (![entry isKindOfClass:[NSDictionary class]]) Fail(@"Invalid test settings backup");
+        id value = [entry[@"present"] boolValue] ? entry[@"value"] : nil;
+        if (![settings saveSharedObject:value forKey:key]) Fail([@"Could not restore " stringByAppendingString:key]);
+    }
+}
+
 int main(int argc, char **argv) {
     @autoreleasepool {
+        if (argc == 3 && strcmp(argv[1], "--restore-settings") == 0) {
+            RestoreSettings([NSDictionary dictionaryWithContentsOfFile:[NSString stringWithUTF8String:argv[2]]]);
+            puts("Original routing and log level restored");
+            return 0;
+        }
+        if (argc == 3 && strcmp(argv[1], "--test-hko") == 0) {
+            WSSettings *settings = [WSSettings shared];
+            NSString *backupPath = [NSString stringWithUTF8String:argv[2]];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:backupPath]) Fail(@"Backup already exists; restore it before another test");
+            NSMutableDictionary *backup = [NSMutableDictionary dictionary];
+            for (NSString *key in TestSettingKeys()) {
+                id value = [settings objectForKey:key default:nil];
+                backup[key] = value ? @{@"present": @YES, @"value": value} : @{@"present": @NO};
+            }
+            if (![backup writeToFile:backupPath atomically:YES]) Fail(@"Cannot save original settings");
+            [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions: @0600} ofItemAtPath:backupPath error:nil];
+            NSDictionary *testValues = @{@"enabled": @YES, @"autoRegion": @YES, @"logLevel": @3, WSRegionProviderKey(WS_REGION_HK): WS_PROVIDER_HKO, WSOverrideKey(22.485, 114.141): WS_PROVIDER_HKO};
+            for (NSString *key in TestSettingKeys()) {
+                if (![settings saveSharedObject:testValues[key] forKey:key]) {
+                    RestoreSettings(backup);
+                    Fail([@"Cannot enable HKO test setting " stringByAppendingString:key]);
+                }
+            }
+            puts("HKO enabled temporarily for Hong Kong; original settings saved");
+            return 0;
+        }
         if (argc == 2 && strcmp(argv[1], "--settings") == 0) {
             // Report only non-sensitive routing settings, never credentials.
             WSSettings *settings = [WSSettings shared];
@@ -28,7 +69,7 @@ int main(int argc, char **argv) {
             return 0;
         }
         if (argc != 4 && argc != 6) {
-            fprintf(stderr, "Usage: hko-device-probe latitude longitude snapshot.json [apple.json patched.json]\n       hko-device-probe --settings\n");
+            fprintf(stderr, "Usage: hko-device-probe latitude longitude snapshot.json [apple.json patched.json]\n       hko-device-probe --settings\n       hko-device-probe --test-hko backup.plist\n       hko-device-probe --restore-settings backup.plist\n");
             return 2;
         }
         char *endLatitude = NULL, *endLongitude = NULL;
