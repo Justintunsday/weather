@@ -1,4 +1,16 @@
-# 真机验证：2026-10-20
+# 真机验证
+
+## HKO：2026-10-26
+
+- v0.1.15 已通过 [GitHub Actions 40335311661](https://github.com/Justintunsday/weather/actions/runs/40335311661) 的原 JSON 回归检查、HKO 134 项断言及 rootless `.deb` 编译，并已安装到目标 iPhone SE 2 / iOS 16.1.1。
+- 真机诊断工具调用与插件相同的 HKO Provider、HTTP client 和 response patcher，成功请求官方 `rhrread` 与 `fnd`。
+- 22:03（香港时间）香港查询返回最近可用站打鼓岭 25°C、湿度 75%、九天预报；与独立取得的官方接口逐项比较温度、湿度及九天最高/最低温，一致。
+- 用该实时 snapshot 补丁一份本地保存的 Apple JSON 响应，成功替换 25 个字段。这是独立诊断工具的补丁结果，不等同于已经在运行中的 App/Widget 拦截成功。
+- 对比原始/补丁 JSON，逐小时、预警、天气变化、AQI 与分钟级降水数据保持语义一致（浮点序列化误差容差 1e-9）。
+- 用户解锁并打开天气后，确认 Weather、WeatherWidget 和 weatherd 均加载 v0.1.15。22:10–22:14 的日志确认 App 多个香港查询与 Widget 查询均记录 `55 fields via hko`，证明两个原生进程的 HKO 响应补丁实际执行；App 中其他地区继续使用原来的 Open-Meteo 路由。
+- 两轮临时路由与 Debug 设置均已恢复。第二轮开始前用户已选择 HKO，结束后读回确认香港仍为 HKO，日志级别恢复为 2。原生 App/Widget 的完整界面、全部字段与长期刷新仍不能据此宣称验收完成；当前 HKO 数值核对来自真机 Provider 和独立 JSON 补丁，不是新一轮 App 原始/补丁响应逐字段抓包。
+
+## 原有验证：2026-10-20
 
 ## Settings 配置后续更新
 

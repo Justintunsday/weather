@@ -12,7 +12,7 @@ static NSArray<NSString *> *WSProviderValues(void) {
 
 static NSArray<NSString *> *WSProviderTitles(void) {
     return @[@"自动", @"Apple Weather（原生）", @"Open-Meteo", @"和风天气 QWeather",
-             @"香港天文台 HKO（尚未接入）", @"澳门 SMG（尚未接入）", @"台湾 CWA（尚未接入）",
+             @"香港天文台 HKO", @"澳门 SMG（尚未接入）", @"台湾 CWA（尚未接入）",
              @"美国 NOAA/NWS（尚未接入）", @"日本气象厅 JMA（尚未接入）", @"韩国气象厅 KMA（尚未接入）"];
 }
 
@@ -73,7 +73,7 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
     NSMutableArray *specifiers = [NSMutableArray array];
 
     PSSpecifier *intro = [PSSpecifier groupSpecifierWithName:@"WeatherSource"];
-    [intro setProperty:@"根据天气 App 当前查询地点的经纬度，自动选择 Open-Meteo / QWeather 等数据源。"
+    [intro setProperty:@"根据天气 App 当前查询地点的经纬度，自动选择香港天文台 HKO / Open-Meteo / QWeather 等数据源。"
              forKey:@"footerText"];
     [specifiers addObject:intro];
 
@@ -105,7 +105,7 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
     [specifiers addObject:global];
 
     PSSpecifier *regionGroup = [PSSpecifier groupSpecifierWithName:@"地区默认数据源"];
-    [regionGroup setProperty:@"开启自动地区时使用地区默认值；关闭时使用全局数据源。城市覆盖始终优先。中国大陆配置 QWeather Key 后自动优先和风天气。"
+    [regionGroup setProperty:@"开启自动地区时使用地区默认值；关闭时使用全局数据源。城市覆盖始终优先。香港自动使用天文台实时观测与九天预报，逐小时及缺失字段保留 Apple；中国大陆配置 Key 后自动优先和风天气。"
                    forKey:@"footerText"];
     [specifiers addObject:regionGroup];
 
@@ -213,7 +213,7 @@ static PSSpecifier *WSTextSpecifier(NSString *name, NSString *key, NSString *pla
     [specifiers addObject:clearLogs];
 
     PSSpecifier *about = [PSSpecifier groupSpecifierWithName:@"关于与限制"];
-    [about setProperty:@"WeatherSource " @WS_VERSION @"：已接入 Open-Meteo 与可选 QWeather；HKO/SMG/CWA/NWS/JMA/KMA 尚未接入，选择后会回退。天气预警、空气质量、分钟级降水与 Apple 原生归属信息保留。"
+    [about setProperty:@"WeatherSource " @WS_VERSION @"：已接入 HKO 实时观测与九天预报、Open-Meteo 与可选 QWeather；SMG/CWA/NWS/JMA/KMA 尚未接入。HKO 逐小时及缺失字段、天气预警、空气质量、分钟级降水与 Apple 原生归属信息保留。HKO 数据来自香港天文台。"
              forKey:@"footerText"];
     [specifiers addObject:about];
 
