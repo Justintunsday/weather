@@ -23,7 +23,7 @@ jobs:
 
       - name: Test HKO provider and response integration
         run: |
-          xcrun clang++ -fobjc-arc -framework Foundation -Isrc tests/HKOProviderTests.mm src/WSHKOProvider.m src/WSWeatherResponsePatcher.mm src/WSWeatherModel.m src/WSCondition.m src/WSSettings.m src/WSProviderRegistry.m src/WSRegionResolver.m src/WSOpenMeteoProvider.m src/WSQWeatherProvider.m -o /tmp/weather-hko-tests
+          xcrun clang++ -fobjc-arc -Wno-nullability-completeness -framework Foundation -Isrc tests/HKOProviderTests.mm src/WSHKOProvider.m src/WSWeatherResponsePatcher.mm src/WSWeatherModel.m src/WSCondition.m src/WSSettings.m src/WSProviderRegistry.m src/WSRegionResolver.m src/WSOpenMeteoProvider.m src/WSQWeatherProvider.m -o /tmp/weather-hko-tests
           /tmp/weather-hko-tests
 
       - name: Setup Theos
@@ -52,4 +52,17 @@ jobs:
         with:
           name: WeatherSource-rootless-deb
           path: packages/*.deb
+          if-no-files-found: error
+
+      - name: Build signed HKO device probe
+        run: |
+          mkdir -p device-tools
+          xcrun --sdk iphoneos clang++ -arch arm64 -miphoneos-version-min=16.0 -fobjc-arc -Wno-nullability-completeness -framework Foundation -Isrc tools/HKODeviceProbe.mm src/*.m src/*.mm -o device-tools/hko-device-probe
+          ldid -S device-tools/hko-device-probe
+
+      - name: Upload device probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: WeatherSource-device-tools
+          path: device-tools/hko-device-probe
           if-no-files-found: error

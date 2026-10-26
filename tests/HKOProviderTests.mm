@@ -176,7 +176,7 @@ static WSWeatherSnapshot *Fetch(double latitude, NSError **errorOut) {
 
 static void TestFetchingAndRegistry(void) {
     Check([[WSProviderRegistry providerForIdentifier:@"hko"] isKindOfClass:[WSHKOProvider class]] && [WSProviderRegistry isProviderAvailable:@"hko"], @"HKO registered and usable without credentials");
-    Check([[WSProviderRegistry automaticProviderForRegion:@"HK"] isEqual:@"hko"] && [[WSProviderRegistry automaticProviderForRegion:@"US"] isEqual:@"open-meteo"], @"Hong Kong defaults to HKO without changing other regions");
+    Check([[WSProviderRegistry automaticProviderForRegion:@"HK"] isEqual:@"hko"] && [[WSProviderRegistry automaticProviderForRegion:@"US"] isEqual:@"openmeteo"], @"Hong Kong defaults to HKO without changing other regions");
     NSString *now = [[NSISO8601DateFormatter new] stringFromDate:[NSDate date]];
     NSMutableDictionary *current = Fixture(@"hko-current");
     current[@"updateTime"] = now; current[@"iconUpdateTime"] = now;

@@ -2,6 +2,7 @@
 #import "WSWeatherProvider.h"
 
 @interface WSProviderRegistry : NSObject
++ (NSString *)automaticProviderForRegion:(NSString *)region;
 
 + (id<WSWeatherProvider>)providerForIdentifier:(NSString *)identifier;
 + (BOOL)isProviderAvailable:(NSString *)identifier;
