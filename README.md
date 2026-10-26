@@ -6,6 +6,7 @@
 
 > **状态：MVP / 已确认目标真机执行 Open-Meteo 响应补丁。**
 > v0.1.10 已修复 JSON 百分比单位与历史时段匹配，通过 CI 回归检查及真机补丁前后响应对比。详见 [真机验证记录](docs/DEVICE_VERIFICATION.md)。
+> v0.1.15 新增香港天文台 HKO；已通过 134 项 HKO 回归断言，并在目标真机确认 App/Widget 的 HKO 响应补丁执行，完整界面与长期刷新仍待验收。
 > 2026-10-20，在 iPhone SE 2（iPhone12,8）/ iOS 16.1.1 / Dopamine / ElleKit 上，v0.1.8 日志确认 Weather App 的香港查询替换 4007 个字段，WeatherWidget 替换 519 个字段。尚未完成全部字段、城市、界面及其他数据源的核验，不能视为完整功能验收。识别失败、请求超时或数据源不可用时返回 Apple 原始响应。
 
 ## 下载
