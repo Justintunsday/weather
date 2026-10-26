@@ -38,3 +38,7 @@ v0.1.15 新增 `hko` Provider；香港地区的“自动”选择优先使用 HK
 ## 验证
 
 `tests/HKOProviderTests.mm` 使用代表性 HKO 响应固定样本，验证气象站、图标、香港日期、失效数据过滤、部分请求失败、注册和缓存，并调用实际 response patcher 检查比例单位及 Apple 未支持字段保留。网络与日志使用测试替身，测试不依赖实时天气数值。GitHub Actions 运行此测试和原 JSON 回归检查，然后编译 rootless `.deb`。真机验收结果另记于 `DEVICE_VERIFICATION.md`。
+
+Actions 也生成独立的 `WeatherSource-device-tools` 制品。签名后的 `hko-device-probe` 需放在 rootless jailbreak 可执行目录（例如 `/var/jb/tmp/WeatherSource-0.1.15/`），不能直接从 iOS Media 目录运行。它使用实际 Provider/HTTP client/patcher，可输出实时 snapshot、对本地 Apple JSON 做补丁，并通过 `--settings` 只查看非敏感路由项。
+
+`--test-hko backup.plist latitude longitude` 仅用于真机验收：先保存启用开关、地区路由、指定位置覆盖和日志级别，再临时启用 HKO/Debug；`--restore-settings backup.plist` 恢复这些项目。备份不含 API Key，权限为 0600，不要提交到仓库。响应和 snapshot 同样只保存在本地。
