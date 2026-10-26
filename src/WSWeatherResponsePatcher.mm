@@ -184,7 +184,7 @@ static NSInteger WSPatchCurrentDictionary(NSMutableDictionary *current, WSCurren
     return changed;
 }
 
-static NSInteger WSPatchHourlyDictionary(NSMutableDictionary *hourly, NSArray<WSHourlyWeather *> *source, NSTimeInterval now, NSTimeInterval ttl) {
+static NSInteger WSPatchHourlyDictionary(NSMutableDictionary *hourly, NSArray<WSHourlyWeather *> *source, NSTimeInterval now, NSTimeInterval ttl, BOOL requiresTimestamps) {
     if (!hourly || !source.count) return 0;
     NSMutableArray *items = WSMutableArray(hourly[@"hours"]);
     if (!items) return 0;
@@ -194,7 +194,7 @@ static NSInteger WSPatchHourlyDictionary(NSMutableDictionary *hourly, NSArray<WS
         if (!item) continue;
         id timeValue = item[@"forecastStart"] ?: item[@"date"];
         double target = WSTimestampFromJSONValue(timeValue);
-        WSHourlyWeather *hour = WSMatchHour(source, target, i);
+        WSHourlyWeather *hour = WSMatchHour(source, target, requiresTimestamps ? NSNotFound : i);
         if (hour) {
             if (WSSetJSONNumber(item, @"temperature", hour.temperature)) changed++;
             if (WSSetJSONNumber(item, @"temperatureApparent", hour.apparentTemperature)) changed++;
@@ -223,7 +223,7 @@ static NSInteger WSPatchHourlyDictionary(NSMutableDictionary *hourly, NSArray<WS
     return changed;
 }
 
-static NSInteger WSPatchDailyDictionary(NSMutableDictionary *daily, NSArray<WSDailyWeather *> *source, NSTimeInterval now, NSTimeInterval ttl) {
+static NSInteger WSPatchDailyDictionary(NSMutableDictionary *daily, NSArray<WSDailyWeather *> *source, NSTimeInterval now, NSTimeInterval ttl, BOOL requiresTimestamps) {
     if (!daily || !source.count) return 0;
     NSMutableArray *items = WSMutableArray(daily[@"days"]);
     if (!items) return 0;
@@ -233,7 +233,7 @@ static NSInteger WSPatchDailyDictionary(NSMutableDictionary *daily, NSArray<WSDa
         if (!item) continue;
         id timeValue = item[@"forecastStart"] ?: item[@"date"];
         double target = WSTimestampFromJSONValue(timeValue);
-        WSDailyWeather *day = WSMatchDay(source, target, i);
+        WSDailyWeather *day = WSMatchDay(source, target, requiresTimestamps ? NSNotFound : i);
         if (day) {
             NSNumber *high = day.temperatureMax;
             NSNumber *low = day.temperatureMin;
@@ -294,14 +294,14 @@ static NSData *WSPatchJSON(NSData *data, WSWeatherSnapshot *snapshot, NSInteger 
     if (snapshot.hourly.count) {
         NSMutableDictionary *hourly = WSMutableDictionary(root[@"forecastHourly"]);
         if (hourly) {
-            changed += WSPatchHourlyDictionary(hourly, snapshot.hourly, now, ttl);
+            changed += WSPatchHourlyDictionary(hourly, snapshot.hourly, now, ttl, snapshot.requiresForecastTimestamps);
             root[@"forecastHourly"] = hourly;
         }
     }
     if (snapshot.daily.count) {
         NSMutableDictionary *daily = WSMutableDictionary(root[@"forecastDaily"]);
         if (daily) {
-            changed += WSPatchDailyDictionary(daily, snapshot.daily, now, ttl);
+            changed += WSPatchDailyDictionary(daily, snapshot.daily, now, ttl, snapshot.requiresForecastTimestamps);
             root[@"forecastDaily"] = daily;
         }
     }

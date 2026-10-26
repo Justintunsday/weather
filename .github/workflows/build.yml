@@ -21,6 +21,11 @@ jobs:
           xcrun clang++ -fobjc-arc -framework Foundation -Isrc tests/ResponsePatcherTests.mm src/WSWeatherResponsePatcher.mm src/WSWeatherModel.m src/WSCondition.m src/WSSettings.m -o /tmp/weather-response-tests
           /tmp/weather-response-tests
 
+      - name: Test HKO provider and response integration
+        run: |
+          xcrun clang++ -fobjc-arc -framework Foundation -Isrc tests/HKOProviderTests.mm src/WSHKOProvider.m src/WSWeatherResponsePatcher.mm src/WSWeatherModel.m src/WSCondition.m src/WSSettings.m src/WSProviderRegistry.m src/WSRegionResolver.m src/WSOpenMeteoProvider.m src/WSQWeatherProvider.m -o /tmp/weather-hko-tests
+          /tmp/weather-hko-tests
+
       - name: Setup Theos
         run: |
           git clone --recursive --depth 1 https://github.com/theos/theos.git "$HOME/theos"

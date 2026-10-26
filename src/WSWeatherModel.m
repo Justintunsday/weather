@@ -109,6 +109,7 @@ static NSArray<NSString *> *WSDailyKeys(void) {
     if (self.providerName) dictionary[@"providerName"] = self.providerName;
     dictionary[@"fetchedAt"] = @(self.fetchedAt);
     dictionary[@"fromCache"] = @(self.fromCache);
+    dictionary[@"requiresForecastTimestamps"] = @(self.requiresForecastTimestamps);
     return dictionary;
 }
 
@@ -139,6 +140,9 @@ static NSArray<NSString *> *WSDailyKeys(void) {
     }
     if ([dictionary[@"fromCache"] respondsToSelector:@selector(boolValue)]) {
         snapshot.fromCache = [dictionary[@"fromCache"] boolValue];
+    }
+    if ([dictionary[@"requiresForecastTimestamps"] respondsToSelector:@selector(boolValue)]) {
+        snapshot.requiresForecastTimestamps = [dictionary[@"requiresForecastTimestamps"] boolValue];
     }
     return snapshot;
 }

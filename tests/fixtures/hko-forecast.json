@@ -1,0 +1,14 @@
+{
+  "updateTime": "2026-10-26T16:30:00+08:00",
+  "weatherForecast": [
+    {"forecastDate":"20261027","forecastMaxtemp":{"value":30,"unit":"C"},"forecastMintemp":{"value":25,"unit":"C"},"forecastMaxrh":{"value":85,"unit":"percent"},"forecastMinrh":{"value":55,"unit":"percent"},"ForecastIcon":51,"PSR":"Low"},
+    {"forecastDate":"20261028","forecastMaxtemp":{"value":28,"unit":"C"},"forecastMintemp":{"value":24,"unit":"C"},"forecastMaxrh":{"value":85,"unit":"percent"},"forecastMinrh":{"value":60,"unit":"percent"},"ForecastIcon":51,"PSR":"Low"},
+    {"forecastDate":"20261029","forecastMaxtemp":{"value":29,"unit":"C"},"forecastMintemp":{"value":24,"unit":"C"},"forecastMaxrh":{"value":85,"unit":"percent"},"forecastMinrh":{"value":60,"unit":"percent"},"ForecastIcon":51,"PSR":"Low"},
+    {"forecastDate":"20261030","forecastMaxtemp":{"value":30,"unit":"C"},"forecastMintemp":{"value":25,"unit":"C"},"forecastMaxrh":{"value":85,"unit":"percent"},"forecastMinrh":{"value":55,"unit":"percent"},"ForecastIcon":50,"PSR":"Low"},
+    {"forecastDate":"20261031","forecastMaxtemp":{"value":30,"unit":"C"},"forecastMintemp":{"value":25,"unit":"C"},"forecastMaxrh":{"value":85,"unit":"percent"},"forecastMinrh":{"value":55,"unit":"percent"},"ForecastIcon":51,"PSR":"Low"},
+    {"forecastDate":"20261101","forecastMaxtemp":{"value":29,"unit":"C"},"forecastMintemp":{"value":25,"unit":"C"},"forecastMaxrh":{"value":90,"unit":"percent"},"forecastMinrh":{"value":65,"unit":"percent"},"ForecastIcon":52,"PSR":"Low"},
+    {"forecastDate":"20261102","forecastMaxtemp":{"value":31,"unit":"C"},"forecastMintemp":{"value":25,"unit":"C"},"forecastMaxrh":{"value":85,"unit":"percent"},"forecastMinrh":{"value":55,"unit":"percent"},"ForecastIcon":51,"PSR":"Low"},
+    {"forecastDate":"20261103","forecastMaxtemp":{"value":29,"unit":"C"},"forecastMintemp":{"value":24,"unit":"C"},"forecastMaxrh":{"value":85,"unit":"percent"},"forecastMinrh":{"value":60,"unit":"percent"},"ForecastIcon":51,"PSR":"Low"},
+    {"forecastDate":"20261104","forecastMaxtemp":{"value":29,"unit":"C"},"forecastMintemp":{"value":24,"unit":"C"},"forecastMaxrh":{"value":85,"unit":"percent"},"forecastMinrh":{"value":60,"unit":"percent"},"ForecastIcon":51,"PSR":"Low"}
+  ]
+}

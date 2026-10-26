@@ -83,6 +83,8 @@
 @property (nonatomic, copy) NSString *providerName;
 @property (nonatomic) NSTimeInterval fetchedAt;
 @property (nonatomic) BOOL fromCache;
+// Partial forecasts (for example, HKO starting tomorrow) cannot align by index.
+@property (nonatomic) BOOL requiresForecastTimestamps;
 
 - (BOOL)hasAnyData;
 - (NSString *)summary;

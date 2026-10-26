@@ -1,6 +1,7 @@
 #import "WSProviderRegistry.h"
 #import "WSOpenMeteoProvider.h"
 #import "WSQWeatherProvider.h"
+#import "WSHKOProvider.h"
 #import "WSRegionResolver.h"
 #import "WSSettings.h"
 #import "WSLogger.h"
@@ -11,6 +12,7 @@
 + (id<WSWeatherProvider>)providerForIdentifier:(NSString *)identifier {
     if ([identifier isEqualToString:WS_PROVIDER_OPEN_METEO]) return [[WSOpenMeteoProvider alloc] init];
     if ([identifier isEqualToString:WS_PROVIDER_QWEATHER]) return [[WSQWeatherProvider alloc] init];
+    if ([identifier isEqualToString:WS_PROVIDER_HKO]) return [[WSHKOProvider alloc] init];
     return nil;
 }
 
@@ -22,6 +24,7 @@
 
 + (NSString *)automaticProviderForRegion:(NSString *)region {
     WSSettings *settings = [WSSettings shared];
+    if ([region isEqualToString:WS_REGION_HK]) return WS_PROVIDER_HKO;
     if ([region isEqualToString:WS_REGION_CN]) {
         if (settings.qweatherKey.length > 0) return WS_PROVIDER_QWEATHER;
         return WS_PROVIDER_OPEN_METEO;

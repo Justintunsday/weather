@@ -1,0 +1,22 @@
+{
+  "temperature": {
+    "recordTime": "2026-10-26T21:00:00+08:00",
+    "data": [
+      {"place": "Hong Kong Observatory", "value": 27, "unit": "C"},
+      {"place": "King's Park", "value": 26, "unit": "C"},
+      {"place": "Ta Kwu Ling", "value": 25, "unit": "C"},
+      {"place": "Tsuen Wan Ho Koon", "value": 24, "unit": "C"},
+      {"place": "Tsuen Wan Shing Mun Valley", "value": 25, "unit": "C"}
+    ]
+  },
+  "humidity": {
+    "recordTime": "2026-10-26T21:00:00+08:00",
+    "data": [{"place": "Hong Kong Observatory", "value": 75, "unit": "percent"}]
+  },
+  "icon": [77],
+  "iconUpdateTime": "2026-10-26T18:00:00+08:00",
+  "updateTime": "2026-10-26T21:02:00+08:00",
+  "uvindex": "",
+  "warningMessage": "",
+  "rainfall": {"data": [{"place": "Tsuen Wan", "max": 0, "unit": "mm"}]}
+}

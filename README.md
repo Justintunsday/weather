@@ -20,7 +20,7 @@
 
 1. 从请求 URL 读取经纬度、语言、国家与 `dataSets`。
 2. 按经纬度 + 国家判断地区；再按地区默认值或城市级覆盖选择数据源。
-3. 并行向 Open-Meteo / QWeather 拉取数据，统一转换为 WeatherKit 的字段和单位。
+3. 并行向所选的 HKO / Open-Meteo / QWeather 拉取数据，统一转换为 WeatherKit 的字段和单位。
 4. 解析 Apple 响应（JSON 或 v2 FlatBuffer），**只覆盖响应中已经存在的字段**。
 5. 预警、空气质量、分钟级降水、日出日落等插件未提供的字段保留 Apple 原生值。
 6. 成功后继续交给 WeatherKit / 原生 UI / 小组件渲染，因此界面、锁屏小组件和主屏小组件保持原生。
@@ -34,9 +34,16 @@
 | Apple Weather | 原生直通 | 不需要 | 关闭插件或选择“Apple Weather（原生）”时使用 |
 | Open-Meteo | **已实现（MVP）** | 不需要 | 全球覆盖；current / hourly / daily、温度、体感、湿度、气压、风、阵风、风向、UV、能见度、云量、降水概率/量、天气现象 |
 | QWeather 和风天气 | **已实现（需 Key，未完成真机联调）** | 需要 | 中国大陆优先；now / 24h / 10d；需要用户自己申请 Key |
-| HKO / SMG / CWA / NWS / JMA / KMA | 预留 | — | 尚未接入；选择后会回退 Open-Meteo，并在日志中标注 |
+| 香港天文台 HKO | **已实现（v0.1.15）** | 不需要 | 香港自动使用；最近可用站温度、湿度、UV、天气现象及九天温湿度/天气预报；逐小时与缺失字段保留 Apple |
+| SMG / CWA / NWS / JMA / KMA | 预留 | — | 尚未接入；选择后会回退 Open-Meteo，并在日志中标注 |
 
 > Open-Meteo 不是中国大陆的本地权威气象机构。若需要“本地权威”数据，请配置 QWeather Key，或等待后续接入对应机构。请遵守各数据源的许可、署名和调用频率要求。
+
+### 香港天文台 HKO
+
+开启自动地区识别、香港数据源选“自动”后使用 HKO；也可在地区或城市覆盖中直接选择“香港天文台 HKO”。关闭自动地区时可用全局数据源选择。无需申请 Key。接入范围、字段和回退策略见 [HKO 适配说明](docs/HKO.md)。
+
+数据来自[香港天文台开放数据](https://www.hko.gov.hk/en/abouthko/opendata_intro.htm)，使用 `rhrread`（实时天气报告）与 `fnd`（九天天气预报）接口；天气图标按[官方定义](https://www.weather.gov.hk/en/textonly/explain/wxicon.htm)映射。每份报告独立校验时间和字段，一个接口失败时仍使用另一个接口的有效数据；均不可用时沿用缓存/Apple 原始响应。HKO 不提供本适配所需的逐小时预报，也不把 PSR 等级虚构为数值降水概率。
 
 ## 安装
 
@@ -104,14 +111,14 @@ v0.1.9 起使用上述共享目录，用于确认实际响应结构与 Content-T
 
 - 已确认目标真机 App/Widget 的 Open-Meteo 响应补丁执行；逐字段数值、全部城市和 UI 验收仍未完成，FlatBuffer 路径未真机验证。
 - 只覆盖 current / hourly / daily 的数值与天气现象。天气预警、AQI、分钟级降水、Apple 归属文案、地图图层保持原生。
-- HKO / SMG / CWA / NWS / JMA / KMA 尚未接入，选择后会回退。
+- SMG / CWA / NWS / JMA / KMA 尚未接入，选择后会回退。HKO 仅提供香港实时观测及九天预报的部分字段；逐小时、预警和缺失字段保留 Apple。
 - 绕过 NSURLProtocol 时仅 completion handler 请求有兜底；其他网络栈或 delegate 路径可能无法覆盖。
 - 天气 App 底部的归属信息仍可能显示 Apple Weather；插件不修改原生归属 UI。
 - Open-Meteo 在中国大陆的网络可达性、QWeather 的套餐权限和商用许可需用户自行确认。
 
 ## 隐私
 
-- 插件只把经纬度发送给用户选择的数据源（Open-Meteo / QWeather）以及 Apple 原有的请求。
+- 插件只把经纬度发送给用户选择的数据源（Open-Meteo / QWeather）以及 Apple 原有的请求。HKO 使用全港固定报告接口，不向 HKO 发送查询坐标，在本地选择最近可用气象站。
 - 不采集设备标识，不接入分析服务，不硬编码任何 API Key。
 - 日志只记录请求路径、坐标、地区、数据源和错误，不记录 Authorization/JWT/完整 Key。
 
@@ -120,6 +127,7 @@ v0.1.9 起使用上述共享目录，用于确认实际响应结构与 Content-T
 - [NSRingo/WeatherKit](https://github.com/NSRingo/WeatherKit)（Apache-2.0）：WeatherKit v2 FlatBuffer 字段结构、响应字段语义与接入思路的重要参考。
 - [Open-Meteo](https://open-meteo.com/)：免费全球预报 API。
 - [和风天气 QWeather](https://www.qweather.com/)：中国大陆预报 API。
+- [香港天文台 HKO](https://www.hko.gov.hk/en/abouthko/opendata_intro.htm)：香港实时天气报告和九天天气预报。
 - [Theos](https://github.com/theos/theos)、[ElleKit](https://github.com/evelyneee/ellekit)。
 
 ## License
